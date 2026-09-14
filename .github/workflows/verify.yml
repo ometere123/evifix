@@ -16,6 +16,10 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt
       - run: python -m compileall -q contracts tests scripts
+      - name: GenVM AST safety lint
+        run: |
+          genvm-lint lint contracts/evifix_gate.py
+          genvm-lint lint contracts/evifix_target_v1.py
       - run: pytest tests/direct -q
       - name: verify Studionet lock
         run: |
