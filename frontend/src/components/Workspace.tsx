@@ -4,23 +4,24 @@ import { GATE_ADDRESS, NETWORK, TARGET_ADDRESS } from "../lib/client";
 import { reads, writes } from "../lib/contracts";
 import { shortHash } from "../lib/validation";
 import { useWallet } from "../lib/WalletContext";
-import type { ProposalSummary, TransactionRecord } from "../types";
+import type { CapsuleSummary, TransactionRecord } from "../types";
 import { Lifecycle } from "./Lifecycle";
 import { ProposalComposer } from "./ProposalComposer";
 import { SetupPanel } from "./SetupPanel";
 
-const TABS = ["overview", "new patch", "evidence & review", "finality", "setup"] as const;
+const TABS = ["overview", "new patch", "evidence & review", "activation", "setup"] as const;
 type Tab = typeof TABS[number];
 
 export function Workspace() {
   const wallet = useWallet();
   const [tab, setTab] = useState<Tab>("overview");
   const [version, setVersion] = useState("");
-  const [codeHash, setCodeHash] = useState("");
-  const [policyFingerprint, setPolicyFingerprint] = useState("");
+  const [baselineHash, setBaselineHash] = useState("");
+  const [profileHash, setProfileHash] = useState("");
+  const [generation, setGeneration] = useState(0);
   const [count, setCount] = useState(0);
   const [activeId, setActiveId] = useState(0);
-  const [proposal, setProposal] = useState<ProposalSummary | null>(null);
+  const [capsule, setCapsule] = useState<CapsuleSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
@@ -32,15 +33,16 @@ export function Workspace() {
     if (!configured) return;
     setLoading(true); setError("");
     try {
-      const [proposalCount, active, currentVersion, currentHash, fingerprint] = await Promise.all([
-        reads.proposalCount(), reads.activeProposal(), reads.currentVersion(), reads.currentCodeHash(), reads.policyFingerprint(),
+      const [capsuleCount, active, currentVersion, currentHash, fingerprint, currentGeneration] = await Promise.all([
+        reads.capsuleCount(), reads.activeCapsule(), reads.baselineVersion(), reads.baselineHash(), reads.profileHash(), reads.generation(),
       ]);
-      setCount(Number(proposalCount));
+      setCount(Number(capsuleCount));
       setActiveId(Number(active));
       setVersion(currentVersion);
-      setCodeHash(currentHash);
-      setPolicyFingerprint(fingerprint);
-      setProposal(Number(active) > 0 ? await reads.proposalSummary(active) : null);
+      setBaselineHash(currentHash);
+      setProfileHash(fingerprint);
+      setGeneration(Number(currentGeneration));
+      setCapsule(Number(active) > 0 ? await reads.capsuleSummary(active) : null);
     } catch (err: any) {
       setError(String(err?.message ?? err));
     } finally { setLoading(false); }
@@ -54,12 +56,12 @@ export function Workspace() {
   }, [refresh]);
 
   const statusClass = useMemo(() => {
-    if (!proposal) return "status";
-    if (proposal.status === "VERIFIED") return "status status-pass";
-    if (proposal.status === "INCONCLUSIVE" || proposal.status === "EVIDENCE_REPAIR_REQUIRED") return "status status-inconclusive";
-    if (proposal.status === "REJECTED" || proposal.status === "EXECUTION_FAILED") return "status status-fail";
+    if (!capsule) return "status";
+    if (capsule.status === "VERIFIED") return "status status-pass";
+    if (capsule.status === "INCONCLUSIVE" || capsule.status === "EVIDENCE_REPAIR_REQUIRED") return "status status-inconclusive";
+    if (capsule.status === "REJECTED" || capsule.status === "ACTIVATION_FAILED") return "status status-fail";
     return "status status-pending";
-  }, [proposal]);
+  }, [capsule]);
 
   async function action(label: string, fn: () => Promise<{hash: string; status: string}>) {
     setError("");
@@ -70,7 +72,7 @@ export function Workspace() {
   return (
     <main className="mx-auto min-h-[calc(100vh-65px)] max-w-7xl px-4 py-6 sm:px-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div><p className="section-kicker">operator workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Evidence-bound release control</h1><p className="mt-2 text-sm text-gray-500">{NETWORK.name} · chain {NETWORK.chainId}</p></div>
+        <div><p className="section-kicker">operator workspace</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Invariant-bound patch control</h1><p className="mt-2 text-sm text-gray-500">{NETWORK.name} · chain {NETWORK.chainId}</p></div>
         <button onClick={() => void refresh()} disabled={!configured || loading} className="btn-secondary"><RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh state</button>
       </div>
 
@@ -84,19 +86,19 @@ export function Workspace() {
       {tab === "overview" ? (
         <div className="grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
           <section className="panel p-5 sm:p-6">
-            <div className="flex items-center justify-between"><div><p className="section-kicker">protected target</p><h2 className="mt-2 text-xl font-semibold text-white">Current release</h2></div><span className="rounded-full border border-gray-800 px-3 py-1 font-mono text-xs text-gray-500">{TARGET_ADDRESS ? shortHash(TARGET_ADDRESS) : "not deployed"}</span></div>
+            <div className="flex items-center justify-between"><div><p className="section-kicker">verified baseline</p><h2 className="mt-2 text-xl font-semibold text-white">Generation {generation}</h2></div><span className="rounded-full border border-gray-800 px-3 py-1 font-mono text-xs text-gray-500">{TARGET_ADDRESS ? shortHash(TARGET_ADDRESS) : "not deployed"}</span></div>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <Metric label="Current version" value={version || "—"} />
-              <Metric label="Proposal count" value={String(count)} />
-              <Metric label="Current code SHA-256" value={shortHash(codeHash, 12, 10)} mono />
-              <Metric label="Policy fingerprint" value={shortHash(policyFingerprint, 12, 10)} mono />
+              <Metric label="Baseline version" value={version || "—"} />
+              <Metric label="Capsule count" value={String(count)} />
+              <Metric label="Baseline SHA-256" value={shortHash(baselineHash, 12, 10)} mono />
+              <Metric label="Invariant profile" value={shortHash(profileHash, 12, 10)} mono />
             </div>
           </section>
           <section className="panel p-5 sm:p-6">
-            <div className="flex items-center justify-between"><div><p className="section-kicker">active proposal</p><h2 className="mt-2 text-xl font-semibold text-white">#{activeId || "—"}</h2></div><span className={statusClass}>{proposal?.status ?? "NONE"}</span></div>
-            {proposal ? <div className="mt-5 space-y-3"><Metric label="Candidate" value={proposal.candidate_version} /><Metric label="Candidate hash" value={shortHash(proposal.candidate_code_hash, 12, 10)} mono /><Metric label="Decision" value={proposal.decision || "not reviewed"} /><Metric label="Review digest" value={shortHash(proposal.review_digest, 12, 10)} mono /></div> : <p className="mt-5 text-sm leading-6 text-gray-500">No active proposal. A rejected, cancelled, expired or verified proposal releases the target slot.</p>}
+            <div className="flex items-center justify-between"><div><p className="section-kicker">active patch capsule</p><h2 className="mt-2 text-xl font-semibold text-white">#{activeId || "—"}</h2></div><span className={statusClass}>{capsule?.status ?? "NONE"}</span></div>
+            {capsule ? <div className="mt-5 space-y-3"><Metric label="Candidate" value={capsule.candidate_version} /><Metric label="Candidate hash" value={shortHash(capsule.candidate_code_hash, 12, 10)} mono /><Metric label="Evidence epoch" value={String(capsule.evidence_epoch)} /><Metric label="Decision" value={capsule.decision || "not reviewed"} /><Metric label="Delta hash" value={shortHash(capsule.delta_hash, 12, 10)} mono /><Metric label="Receipt" value={shortHash(capsule.receipt_hash, 12, 10)} mono /></div> : <p className="mt-5 text-sm leading-6 text-gray-500">No active capsule. Terminal outcomes release the target slot for a new patch.</p>}
           </section>
-          <section className="panel p-5 sm:p-6 lg:col-span-2"><p className="section-kicker">lifecycle</p><div className="mt-4"><Lifecycle proposal={proposal} /></div></section>
+          <section className="panel p-5 sm:p-6 lg:col-span-2"><p className="section-kicker">semantic continuity</p><div className="mt-4"><Lifecycle capsule={capsule} /></div></section>
         </div>
       ) : null}
 
@@ -104,22 +106,22 @@ export function Workspace() {
 
       {tab === "evidence & review" ? (
         <section className="panel p-5 sm:p-6">
-          <div className="flex items-start gap-3"><span className="icon-tile"><FileCheck2 className="h-4 w-4" /></span><div><h2 className="panel-title">Evidence and semantic review</h2><p className="panel-copy">Review is permissionless, but only an exact all-PASS semantic vector can queue installation. Inconclusive review stays active and requires fresh evidence.</p></div></div>
-          {proposal ? <div className="mt-6 grid gap-3 sm:grid-cols-2"><Metric label="Status" value={proposal.status} /><Metric label="Decision" value={proposal.decision || "—"} /><Metric label="Last review code" value={proposal.last_review_code || "—"} /><Metric label="Evidence set" value={shortHash(proposal.evidence_set_hash, 12, 10)} mono /></div> : <p className="mt-6 text-sm text-gray-500">No active proposal.</p>}
+          <div className="flex items-start gap-3"><span className="icon-tile"><FileCheck2 className="h-4 w-4" /></span><div><h2 className="panel-title">Evidence epoch and invariant adjudication</h2><p className="panel-copy">Attach a typed evidence bundle. EviFix derives the observed semantic delta, compares it with declared and permitted scope, then adjudicates every invariant. Uncertainty never mints a receipt.</p></div></div>
+          {capsule ? <div className="mt-6 grid gap-3 sm:grid-cols-2"><Metric label="Status" value={capsule.status} /><Metric label="Decision" value={capsule.decision || "—"} /><Metric label="Evidence epoch" value={String(capsule.evidence_epoch)} /><Metric label="Evidence bundle" value={shortHash(capsule.evidence_bundle_hash, 12, 10)} mono /><Metric label="Last review code" value={capsule.last_review_code || "—"} /><Metric label="Decision hash" value={shortHash(capsule.decision_hash, 12, 10)} mono /></div> : <p className="mt-6 text-sm text-gray-500">No active patch capsule.</p>}
+          {capsule && ["AWAITING_EVIDENCE", "EVIDENCE_REPAIR_REQUIRED", "INCONCLUSIVE"].includes(capsule.status) ? <EvidenceEpochBox capsule={capsule} disabled={!canWrite} onComplete={onComplete} /> : null}
           <div className="mt-5 flex flex-wrap gap-2">
-            <button disabled={!canWrite || !proposal || !["PROPOSED", "REVIEW_RETRY_REQUIRED"].includes(proposal.status)} className="btn-primary" onClick={() => proposal && void action("Review proposal", () => writes.reviewProposal(proposal.proposal_id))}>Run review</button>
-            <button disabled={!canWrite || !proposal || !["PROPOSED", "REVIEW_RETRY_REQUIRED", "EVIDENCE_REPAIR_REQUIRED", "INCONCLUSIVE"].includes(proposal.status)} className="btn-secondary" onClick={() => proposal && void action("Cancel proposal", () => writes.cancelProposal(proposal.proposal_id))}>Cancel</button>
-            <button disabled={!canWrite || !proposal} className="btn-secondary" onClick={() => proposal && void action("Expire proposal", () => writes.expireProposal(proposal.proposal_id))}>Expire if due</button>
+            <button disabled={!canWrite || !capsule || !["READY", "REVIEW_RETRY_REQUIRED"].includes(capsule.status)} className="btn-primary" onClick={() => capsule && void action("Review patch capsule", () => writes.reviewCapsule(capsule.capsule_id))}>Derive delta + review</button>
+            <button disabled={!canWrite || !capsule || !["AWAITING_EVIDENCE", "READY", "REVIEW_RETRY_REQUIRED", "EVIDENCE_REPAIR_REQUIRED", "INCONCLUSIVE"].includes(capsule.status)} className="btn-secondary" onClick={() => capsule && void action("Cancel patch capsule", () => writes.cancelCapsule(capsule.capsule_id))}>Cancel</button>
+            <button disabled={!canWrite || !capsule} className="btn-secondary" onClick={() => capsule && void action("Expire patch capsule", () => writes.expireCapsule(capsule.capsule_id))}>Expire if due</button>
           </div>
-          {proposal && ["INCONCLUSIVE", "EVIDENCE_REPAIR_REQUIRED"].includes(proposal.status) ? <RepairBox proposal={proposal} disabled={!canWrite} onComplete={onComplete} /> : null}
         </section>
       ) : null}
 
-      {tab === "finality" ? (
+      {tab === "activation" ? (
         <section className="panel p-5 sm:p-6">
-          <div className="flex items-start gap-3"><span className="icon-tile"><ShieldCheck className="h-4 w-4" /></span><div><h2 className="panel-title">Finality and installation recovery</h2><p className="panel-copy">Accepted review is not treated as installed code. The upgrade child is emitted on finality and the target re-hashes the exact bytes before replacement.</p></div></div>
-          <div className="mt-6"><Lifecycle proposal={proposal} /></div>
-          <div className="mt-5 flex flex-wrap gap-2"><button disabled={!canWrite || proposal?.status !== "UPGRADE_QUEUED"} className="btn-primary" onClick={() => proposal && void action("Reconcile install", () => writes.reconcileInstall(proposal.proposal_id))}>Reconcile finalized install</button><button disabled={!canWrite || proposal?.status !== "UPGRADE_QUEUED"} className="btn-secondary" onClick={() => proposal && void action("Mark execution timeout", () => writes.markExecutionTimeout(proposal.proposal_id))}><TimerReset className="h-4 w-4" />Timeout if due</button></div>
+          <div className="flex items-start gap-3"><span className="icon-tile"><ShieldCheck className="h-4 w-4" /></span><div><h2 className="panel-title">Finalized receipt activation</h2><p className="panel-copy">The target receives exact candidate bytes with a finalized patch receipt, re-hashes them locally, verifies the receipt against the current baseline, replaces code, and advances the verified baseline only after finalized attestation.</p></div></div>
+          <div className="mt-6"><Lifecycle capsule={capsule} /></div>
+          <div className="mt-5 flex flex-wrap gap-2"><button disabled={!canWrite || capsule?.status !== "RECEIPT_ISSUED"} className="btn-primary" onClick={() => capsule && void action("Reconcile activation", () => writes.reconcileActivation(capsule.capsule_id))}>Reconcile finalized activation</button><button disabled={!canWrite || capsule?.status !== "RECEIPT_ISSUED"} className="btn-secondary" onClick={() => capsule && void action("Mark activation timeout", () => writes.markActivationTimeout(capsule.capsule_id))}><TimerReset className="h-4 w-4" />Timeout if due</button></div>
         </section>
       ) : null}
 
@@ -134,18 +136,18 @@ export function Workspace() {
 }
 
 function Metric({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
-  return <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-4"><p className="text-[11px] uppercase tracking-[0.16em] text-gray-600">{label}</p><p className={`mt-2 text-sm text-gray-200 ${mono ? "font-mono text-xs" : "font-medium"}`}>{value}</p></div>;
+  return <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-4"><p className="text-[11px] uppercase tracking-[0.16em] text-gray-600">{label}</p><p className={`mt-2 text-sm text-gray-200 ${mono ? "font-mono text-xs" : "font-medium"}`}>{value || "—"}</p></div>;
 }
 
-function RepairBox({ proposal, disabled, onComplete }: { proposal: ProposalSummary; disabled: boolean; onComplete: (hash: string, action: string, status: string) => void }) {
-  const [form, setForm] = useState({ candidateSourceUrl: "", ciEvidenceUrl: "", ciEvidenceId: "", auditEvidenceUrl: "", auditEvidenceId: "" });
+function EvidenceEpochBox({ capsule, disabled, onComplete }: { capsule: CapsuleSummary; disabled: boolean; onComplete: (hash: string, action: string, status: string) => void }) {
+  const [manifestUrl, setManifestUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function submit() {
     setBusy(true); setError("");
-    try { const tx = await writes.repairEvidence({ proposalId: proposal.proposal_id, ...form }); onComplete(tx.hash, "Repair evidence", tx.status); }
+    try { const tx = await writes.submitEvidenceEpoch(capsule.capsule_id, manifestUrl); onComplete(tx.hash, `Submit evidence epoch ${capsule.evidence_epoch + 1}`, tx.status); }
     catch (err: any) { setError(String(err?.message ?? err)); }
     finally { setBusy(false); }
   }
-  return <div className="mt-6 rounded-2xl border border-warning/20 bg-warning/5 p-4"><p className="text-sm font-semibold text-warning">Fresh evidence required</p><p className="mt-1 text-xs leading-5 text-gray-500">Candidate bytes and candidate hash remain frozen. New evidence IDs are mandatory.</p><div className="mt-4 grid gap-3 md:grid-cols-2">{(Object.keys(form) as Array<keyof typeof form>).map(key => <input key={key} className="input w-full" placeholder={key} value={form[key]} onChange={e => setForm(current => ({ ...current, [key]: e.target.value }))} />)}</div>{error ? <p className="error-box mt-3">{error}</p> : null}<button disabled={disabled || busy || Object.values(form).some(v => !v)} onClick={() => void submit()} className="btn-primary mt-4">{busy ? "Submitting" : "Replace evidence"}</button></div>;
+  return <div className="mt-6 rounded-2xl border border-warning/20 bg-warning/5 p-4"><p className="text-sm font-semibold text-warning">Attach a fresh evidence epoch</p><p className="mt-1 text-xs leading-5 text-gray-500">Candidate bytes, baseline, declared intent, and profile remain frozen. A byte-identical evidence bundle cannot be used to reroll an inconclusive semantic decision.</p><input className="input mt-4 w-full" placeholder="Immutable evidence manifest URL" value={manifestUrl} onChange={e => setManifestUrl(e.target.value)} />{error ? <p className="error-box mt-3">{error}</p> : null}<button disabled={disabled || busy || !manifestUrl} onClick={() => void submit()} className="btn-primary mt-4">{busy ? "Submitting" : "Submit evidence epoch"}</button></div>;
 }

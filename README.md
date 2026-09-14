@@ -1,99 +1,123 @@
 # EviFix
 
-**Evidence before execution.**
+EviFix is an invariant-bound semantic patching protocol for GenLayer Intelligent Contracts.
 
-EviFix is a GenLayer-native semantic upgrade gate for Intelligent Contracts. It lets a protected contract accept replacement code only when the exact candidate bytes, immutable provenance, CI evidence, independent audit evidence, validator review, protocol finality, and post-install attestation all agree.
-
-EviFix is designed as a complete product rather than a demo wrapper around a contract. The contract owns the consequential decision. The interface makes every state legible without pretending that an accepted transaction is automatically a successful or finalized upgrade.
+Instead of asking only whether a replacement contract appears safe, EviFix binds every patch to a verified baseline, a declared change intent, a target-specific invariant profile, and a typed evidence epoch. Validators first derive the semantic delta they actually observe. The protocol then compares that observed delta with what the developer declared and what the target profile permits. Only a patch that remains inside the invariant envelope can receive a finalized patch receipt.
 
 ## Network lock
 
-EviFix targets one network configuration:
+EviFix is built for **GenLayer Studionet** only.
 
-- network: **GenLayer Studionet**
 - chain ID: **61999**
-- hexadecimal chain ID: **0xF22F**
+- chain hex: **0xF22F**
 - RPC: `https://studio.genlayer.com/api`
 - explorer: `https://explorer-studio.genlayer.com`
 
-The frontend actively switches the connected wallet to that chain before writes. Transaction polling is throttled to one request every three seconds.
+Do not deploy this repository to another network without an explicit project decision and corresponding test changes.
 
-## Why EviFix is stronger
+## Core model
 
-### First-class inconclusive review
+The protocol has five first-class objects:
 
-Semantic review is tri-state per security dimension: `PASS`, `FAIL`, or `INCONCLUSIVE`. Any failure rejects the candidate. Any uncertainty blocks execution. Only an all-pass vector may authorize installation.
+1. **InvariantProfile** — immutable target rules, permitted/forbidden semantic domains, evidence policy, and baseline configuration.
+2. **PatchCapsule** — exact candidate bytes + SHA-256, immutable candidate source, declared intent, declared domains, and the baseline generation it extends.
+3. **Evidence epoch** — a fresh immutable bundle of typed claims. An inconclusive review cannot be rerolled against byte-identical evidence.
+4. **Semantic delta** — validator-derived classification of what actually changed in storage, authorization, user rights, upgrade authority, external calls, value flow, evidence, consensus, finality, liveness, and interface.
+5. **PatchReceipt** — authorization bound to the target, baseline, candidate, invariant profile, semantic delta, evidence bundle and evidence epoch.
 
-An inconclusive result cannot be repeatedly re-run against the same evidence until a favourable model output appears. The proposal moves to `INCONCLUSIVE` and requires newly identified evidence before another review, while the frozen candidate bytes and hash remain unchanged.
+A successful activation advances the target's verified baseline generation. The next patch must extend that exact baseline.
 
-### Exact consequence binding
+## Why this is fail-closed
 
-Every proposal freezes the candidate bytes and SHA-256 digest at creation. Source, CI, and audit envelopes bind to the target, parent hash, candidate hash, candidate version, policy fingerprint, and immutable source commit. Validators independently reproduce the full review result and must agree on every authorization-driving field.
+A patch cannot be authorized when:
 
-### Independent evidence
+- candidate bytes differ from the immutable candidate source;
+- the baseline source no longer hashes to the anchored baseline;
+- the observed semantic delta contains a forbidden domain;
+- the observed delta contains an undeclared change;
+- the observed delta falls outside permitted domains;
+- any invariant is `FAIL`;
+- any required semantic conclusion is `INCONCLUSIVE`;
+- a required evidence claim is missing, stale, malformed, unbound, unpublished by an approved authority, or not `PASS`;
+- the independent-review claim comes from the same GitHub owner as the source publisher;
+- a supposedly fresh evidence epoch is byte-identical to the previous one;
+- validators do not exactly agree on all authorization-driving outputs;
+- the receipt does not match the target's current verified baseline;
+- receipt activation has expired;
+- the target receives candidate bytes whose SHA-256 differs from the receipt.
 
-Source, CI, and audit authorities are registered separately. The independent audit repository publisher must differ from both the source and CI publishers. Evidence IDs are scoped and replay-resistant.
+## Evidence policy
 
-### Finality before installation
+EviFix does not hard-code a source/CI/audit triangle. A target registers a generic evidence policy with approved immutable publishers, required typed claims, and a minimum independent-issuer threshold.
 
-A successful semantic review only queues an upgrade. EviFix emits the target upgrade call on the finality path. The target re-checks authorization, obtains the frozen bytes, hashes them again, persists the installation attestation, replaces code, then emits a finality-bound confirmation to the gate.
+At minimum, the current protocol requires:
 
-### Bounded recovery
+- `BUILD_RESULT`
+- `TEST_RESULT`
+- `INDEPENDENT_REVIEW`
 
-Bad or stale evidence moves to a repair state. Transient fetch/model failures move to a retry state. Proposals expire. Queued installations have execution deadlines. Reconciliation and timeout paths inspect finalized and non-final target attestations before releasing an active slot.
+Additional supported claim types include schema compatibility, interface compatibility, adversarial testing and custom claims. Every claim artifact is independently hash-bound to its manifest entry and to the exact capsule, baseline, candidate and invariant profile.
 
-## Repository layout
+See `evidence/examples/` for the canonical v2 shape.
+
+## Patch flow
 
 ```text
-contracts/
-  evifix_gate.py                    semantic upgrade gate
-  evifix_target_v1.py               protected target integration pattern
-  fixtures/
-    evifix_target_v2_safe.py        compatible candidate fixture
-    evifix_target_v2_unsafe.py      adversarial candidate fixture
-
-tests/direct/
-  test_evifix_gate.py               lifecycle and adversarial contract tests
-  test_source_guards.py             source-level invariants
-  test_network_guard.py             Studionet configuration lock
-
-frontend/
-  src/components/                   landing, workspace and lifecycle UI
-  src/lib/                          wallet, GenLayer client and contract calls
-
-docs/
-  ARCHITECTURE.md
-  SECURITY_MODEL.md
-  SUBMISSION.md
-  LIVE_EVIDENCE.md
-
-evidence/examples/                  canonical CI and audit envelope examples
-scripts/                             preflight and hashing helpers
+anchor target + invariant profile
+        ↓
+verified baseline generation N
+        ↓
+open immutable patch capsule
+        ↓
+attach evidence epoch
+        ↓
+validators fetch exact baseline/candidate/evidence
+        ↓
+derive semantic delta
+        ↓
+compare observed vs declared vs permitted scope
+        ↓
+adjudicate every invariant
+        ↓
+PASS / REJECT / INCONCLUSIVE
+        ↓
+finalized patch receipt
+        ↓
+target verifies receipt + re-hashes delivered bytes
+        ↓
+code replacement
+        ↓
+finalized activation attestation
+        ↓
+verified baseline generation N + 1
 ```
+
+## Repository
+
+- `contracts/evifix_gate.py` — invariant profile, patch capsule, evidence epoch, two-stage semantic review, receipt issuance and baseline reconciliation.
+- `contracts/evifix_target_v1.py` — receipt-consuming protected target and target-side baseline continuity.
+- `contracts/fixtures/` — compatible and adversarial candidate fixtures.
+- `tests/direct/` — Direct Mode and source-level regression checks.
+- `frontend/` — operator UI for profile anchoring, patch capsules, evidence epochs, review and activation recovery.
+- `docs/ARCHITECTURE.md` — state machine and trust boundaries.
+- `docs/SECURITY_MODEL.md` — authorization invariants and failure model.
+- `docs/LIVE_EVIDENCE.md` — deployment and transaction evidence template. Do not fabricate it.
+- `AGENT_HANDOFF.md` — exact live completion instructions for Codex.
 
 ## Local verification
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r requirements.txt
-python scripts/preflight.py
-```
-
-Frontend:
-
-```bash
+python -m compileall -q contracts tests scripts
+genvm-lint lint contracts/evifix_gate.py
+genvm-lint lint contracts/evifix_target_v1.py
+pytest tests/direct -q
 cd frontend
-npm install
+npm install --no-audit --no-fund
 npm run build
-npm run dev
 ```
 
-Copy `frontend/.env.example` to `frontend/.env` only after contracts are deployed and fill in the final EviFix gate and target addresses.
+The repository CI also verifies the Studionet 61999 lock.
 
-## Deployment handoff
+## Deployment evidence
 
-The repository deliberately contains no invented deployment addresses, transaction hashes, or fabricated live evidence. Deployment and production evidence collection should be performed from the final commit on Studionet and then recorded in `docs/LIVE_EVIDENCE.md`.
-
-See [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md) for the exact finishing sequence.
+This repository intentionally does not contain invented contract addresses or transaction hashes. Deployment, real immutable evidence artifacts, the safe lifecycle and the fail-closed demonstration must be performed live on Studionet 61999 and recorded in `docs/LIVE_EVIDENCE.md`.

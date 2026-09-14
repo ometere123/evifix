@@ -1,37 +1,37 @@
-# EviFix submission handoff
+# EviFix submission summary
 
-## Product statement
+## One-line description
 
-EviFix is an evidence-bound semantic upgrade gate for GenLayer Intelligent Contracts. It prevents a replacement contract from becoming live code unless exact candidate bytes, immutable provenance, CI evidence, independent audit evidence, tri-state validator review, finality, and post-install attestation all agree.
+EviFix is an invariant-bound semantic patching protocol that lets Intelligent Contracts accept only patches whose observed semantic delta matches declared and permitted scope, preserves every registered invariant, and carries a finalized baseline-bound receipt.
 
-## GenLayer-native fit
+## GenLayer fit
 
-EviFix needs GenLayer for three core reasons:
+EviFix uses Intelligent Consensus for a problem deterministic smart contracts cannot solve alone: determining the semantic behaviour change between two arbitrary program versions and adjudicating target-specific natural-language invariants.
 
-- semantic source-to-source safety review is not reducible to ordinary deterministic checks;
-- leader and validators independently retrieve evidence and reproduce the consequential review result;
-- installation is intentionally tied to GenLayer finality rather than an early transaction status.
+The contract does not outsource authorization to an LLM. Deterministic code verifies exact source/evidence bindings, derives scope violations from schema-constrained semantic outputs, and requires independent validator agreement before a receipt can exist.
 
-The GenLayer component is therefore on the critical execution path, not a decorative AI call.
+## Distinguishing mechanisms
 
-## Reviewer path
+- verified baseline generations;
+- immutable patch capsules with declared intent;
+- declared-vs-observed semantic delta enforcement;
+- target-specific invariant profiles;
+- generic typed evidence policies rather than fixed CI/audit roles;
+- evidence epochs with byte-identical reroll prevention;
+- first-class `INCONCLUSIVE` outcomes;
+- finalized patch receipts rather than a generic authorization flag;
+- target-side exact-byte hashing and receipt verification;
+- finality-backed baseline continuity after activation.
 
-1. Inspect `contracts/evifix_gate.py` and `contracts/evifix_target_v1.py`.
-2. Inspect `tests/direct/` for lifecycle, evidence, anti-grinding, and adversarial cases.
-3. Read `docs/ARCHITECTURE.md` and `docs/SECURITY_MODEL.md`.
-4. Confirm the frontend network lock displays Studionet chain ID 61999 and reads no fabricated deployment state.
-5. After deployment, use `docs/LIVE_EVIDENCE.md` for addresses, finalized transactions, hashes, and the completed upgrade lifecycle.
+## Demo path
 
-## Engineering gates
+1. show target at baseline generation 0;
+2. open a capsule declaring a liveness-only change;
+3. attach a valid evidence epoch;
+4. review a safe fixture where the observed delta stays in scope and show `RECEIPT_ISSUED`;
+5. show receipt binding values;
+6. activate and show generation advance to 1;
+7. open an adversarial capsule or run a fail-closed fixture where upgrade authority/authorization changes unexpectedly;
+8. show the observed delta and terminal rejection or an inconclusive case that requires a fresh evidence epoch.
 
-A review-ready commit should have:
-
-- GenVM lint/type/schema checks passing;
-- Direct Mode tests passing;
-- adversarial fixture checks passing;
-- frontend TypeScript/build passing;
-- final source hashes recorded;
-- deployed source parity checked;
-- target registration finalized;
-- at least one complete safe-candidate lifecycle demonstrated;
-- live evidence recorded from the final commit.
+No deployment claim should be made until `docs/LIVE_EVIDENCE.md` contains real Studionet 61999 data.

@@ -1,0 +1,37 @@
+{
+  "schema": "evifix-evidence-bundle-v2",
+  "bundle_id": "bundle-001",
+  "publisher": "build-lab",
+  "capsule_id": 1,
+  "target": "0x0000000000000000000000000000000000000000",
+  "baseline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "candidate_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "profile_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "candidate_version": "2.0.0",
+  "source_commit": "dddddddddddddddddddddddddddddddddddddddd",
+  "published_at": 0,
+  "expires_at": 0,
+  "claims": [
+    {
+      "claim_id": "build-001",
+      "kind": "BUILD_RESULT",
+      "issuer": "build-lab",
+      "artifact_url": "https://raw.githubusercontent.com/example/build-evidence/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/build.json",
+      "artifact_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "claim_id": "tests-001",
+      "kind": "TEST_RESULT",
+      "issuer": "build-lab",
+      "artifact_url": "https://raw.githubusercontent.com/example/build-evidence/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee/tests.json",
+      "artifact_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    {
+      "claim_id": "review-001",
+      "kind": "INDEPENDENT_REVIEW",
+      "issuer": "review-lab",
+      "artifact_url": "https://raw.githubusercontent.com/example-independent/reviews/ffffffffffffffffffffffffffffffffffffffff/review.json",
+      "artifact_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    }
+  ]
+}
