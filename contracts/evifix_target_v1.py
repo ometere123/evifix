@@ -7,56 +7,77 @@ import hashlib
 @gl.contract_interface
 class EviFixGate:
     class View:
-        def is_upgrade_authorized(self, proposal_id: u256, target: str, candidate_hash: str) -> bool: ...
-        def get_candidate_code(self, proposal_id: u256) -> bytes: ...
+        def verify_patch_receipt(
+            self,
+            capsule_id: u256,
+            target: str,
+            baseline_hash: str,
+            candidate_hash: str,
+            receipt_hash: str,
+        ) -> bool: ...
 
     class Write:
-        def register_target(
+        def anchor_target(
             self,
             owner: str,
-            constitution: str,
-            source_authority: str,
-            ci_authority: str,
-            audit_authority: str,
+            invariant_profile_json: str,
             source_prefix: str,
-            ci_prefix: str,
-            audit_prefix: str,
-            current_version: str,
-            current_source_url: str,
-            current_code_hash: str,
+            evidence_policy_json: str,
+            baseline_version: str,
+            baseline_source_url: str,
+            baseline_code_hash: str,
             max_evidence_age_seconds: int,
-            proposal_ttl_seconds: int,
-            execution_timeout_seconds: int,
+            capsule_ttl_seconds: int,
+            activation_timeout_seconds: int,
         ) -> None: ...
-        def confirm_install(self, proposal_id: u256, candidate_hash: str) -> None: ...
+
+        def record_activation(
+            self,
+            capsule_id: u256,
+            receipt_hash: str,
+            candidate_hash: str,
+            generation: u256,
+        ) -> None: ...
 
 
 class EviFixTarget(gl.Contract):
-    # Persistent v1 layout. Compatible candidates must preserve this order.
+    # Persistent v1 layout. Compatible patches must preserve these fields in order.
     owner: Address
     evifix_gate: Address
     product_name: str
     protected_value: str
-    installed_proposal_id: u256
-    installed_candidate_hash: str
-    registered_with_evifix: bool
+    baseline_hash: str
+    last_receipt_hash: str
+    last_capsule_id: u256
+    baseline_generation: u256
+    enrolled_with_evifix: bool
 
     def __init__(self, evifix_gate: Address, product_name: str, initial_value: str):
         self.owner = gl.message.sender_address
         self.evifix_gate = evifix_gate
         self.product_name = product_name
         self.protected_value = initial_value
-        self.installed_proposal_id = u256(0)
-        self.installed_candidate_hash = ""
-        self.registered_with_evifix = False
+        self.baseline_hash = ""
+        self.last_receipt_hash = ""
+        self.last_capsule_id = u256(0)
+        self.baseline_generation = u256(0)
+        self.enrolled_with_evifix = False
 
-        # The gate is the sole code upgrader. The owner deliberately is not.
+        # EviFix is the sole GenVM code upgrader. The owner is deliberately not an upgrader.
         root = gl.storage.Root.get()
         root.upgraders.get().append(evifix_gate)
 
     def _only_owner(self) -> None:
         if gl.message.sender_address != self.owner:
             raise gl.vm.UserError("Only owner")
+
+    def _is_hex_hash(self, value: str) -> bool:
+        if len(value) != 64:
+            return False
+        for char in value:
+            if char not in "0123456789abcdef":
+                return False
+        return True
 
     @gl.public.write
     def set_protected_value(self, value: str) -> None:
@@ -80,68 +101,108 @@ class EviFixTarget(gl.Contract):
         return self.evifix_gate
 
     @gl.public.write
-    def register_with_evifix(
+    def enrol_with_evifix(
         self,
-        constitution: str,
-        source_authority: str,
-        ci_authority: str,
-        audit_authority: str,
+        invariant_profile_json: str,
         source_prefix: str,
-        ci_prefix: str,
-        audit_prefix: str,
-        current_version: str,
-        current_source_url: str,
-        current_code_hash: str,
+        evidence_policy_json: str,
+        baseline_version: str,
+        baseline_source_url: str,
+        baseline_code_hash: str,
         max_evidence_age_seconds: int,
-        proposal_ttl_seconds: int,
-        execution_timeout_seconds: int,
+        capsule_ttl_seconds: int,
+        activation_timeout_seconds: int,
     ) -> None:
         self._only_owner()
-        if self.registered_with_evifix:
-            raise gl.vm.UserError("Already registered with EviFix")
-        self.registered_with_evifix = True
+        if self.enrolled_with_evifix:
+            raise gl.vm.UserError("Already enrolled with EviFix")
+        normalized_hash = baseline_code_hash.lower()
+        if not self._is_hex_hash(normalized_hash):
+            raise gl.vm.UserError("baseline_code_hash must be a lowercase SHA-256 digest")
 
-        EviFixGate(self.evifix_gate).emit(on="finalized").register_target(
-            str(self.owner), constitution,
-            source_authority, ci_authority, audit_authority,
-            source_prefix, ci_prefix, audit_prefix,
-            current_version, current_source_url, current_code_hash,
-            max_evidence_age_seconds, proposal_ttl_seconds, execution_timeout_seconds,
+        # Anchor the target-local baseline before finality. If this transaction does not
+        # finalize, neither this state nor the gate-side profile becomes authoritative.
+        self.baseline_hash = normalized_hash
+        self.enrolled_with_evifix = True
+
+        EviFixGate(self.evifix_gate).emit(on="finalized").anchor_target(
+            str(self.owner),
+            invariant_profile_json,
+            source_prefix,
+            evidence_policy_json,
+            baseline_version,
+            baseline_source_url,
+            normalized_hash,
+            max_evidence_age_seconds,
+            capsule_ttl_seconds,
+            activation_timeout_seconds,
         )
 
     @gl.public.write
-    def evifix_upgrade(self, proposal_id: u256, candidate_hash: str) -> None:
+    def apply_evifix_patch(
+        self,
+        capsule_id: u256,
+        receipt_hash: str,
+        baseline_hash: str,
+        candidate_hash: str,
+        candidate_code: bytes,
+    ) -> None:
         if gl.message.sender_address != self.evifix_gate:
-            raise gl.vm.UserError("Only EviFix gate may upgrade this target")
+            raise gl.vm.UserError("Only EviFix may deliver a patch receipt")
+        if not self.enrolled_with_evifix:
+            raise gl.vm.UserError("Target is not enrolled with EviFix")
+
+        normalized_baseline = baseline_hash.lower()
+        normalized_candidate = candidate_hash.lower()
+        if self.baseline_hash != normalized_baseline:
+            raise gl.vm.UserError("Local verified baseline does not match the receipt baseline")
+        actual_hash = hashlib.sha256(candidate_code).hexdigest()
+        if actual_hash != normalized_candidate:
+            raise gl.vm.UserError("Delivered candidate bytes do not match the receipt candidate hash")
 
         gate = EviFixGate(self.evifix_gate)
-        normalized_hash = candidate_hash.lower()
-        if not gate.view().is_upgrade_authorized(
-            proposal_id,
+        if not gate.view().verify_patch_receipt(
+            capsule_id,
             str(gl.message.contract_address),
-            normalized_hash,
+            normalized_baseline,
+            normalized_candidate,
+            receipt_hash,
         ):
-            raise gl.vm.UserError("EviFix authorization is absent, stale, or mismatched")
+            raise gl.vm.UserError("Patch receipt is absent, stale, consumed, or mismatched")
 
-        candidate_code = gate.view().get_candidate_code(proposal_id)
-        actual_hash = hashlib.sha256(candidate_code).hexdigest()
-        if actual_hash != normalized_hash:
-            raise gl.vm.UserError("Approved candidate bytes do not match approved hash")
+        next_generation = u256(int(self.baseline_generation) + 1)
 
-        self.installed_proposal_id = proposal_id
-        self.installed_candidate_hash = actual_hash
+        # Persist the activation attestation before code replacement. A compatible patch
+        # preserves these fields and therefore carries the verified baseline forward.
+        self.baseline_hash = actual_hash
+        self.last_receipt_hash = receipt_hash
+        self.last_capsule_id = capsule_id
+        self.baseline_generation = next_generation
 
         root = gl.storage.Root.get()
         code = root.code.get()
         code.truncate()
         code.extend(candidate_code)
 
-        gate.emit(on="finalized").confirm_install(proposal_id, actual_hash)
+        gate.emit(on="finalized").record_activation(
+            capsule_id,
+            receipt_hash,
+            actual_hash,
+            next_generation,
+        )
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def evifix_installed_proposal_id(self) -> u256:
-        return self.installed_proposal_id
+    def evifix_baseline_hash(self) -> str:
+        return self.baseline_hash
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def evifix_installed_candidate_hash(self) -> str:
-        return self.installed_candidate_hash
+    def evifix_last_receipt_hash(self) -> str:
+        return self.last_receipt_hash
+
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
+    def evifix_last_capsule_id(self) -> u256:
+        return self.last_capsule_id
+
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
+    def evifix_generation(self) -> u256:
+        return self.baseline_generation

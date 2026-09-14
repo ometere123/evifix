@@ -1,5 +1,5 @@
 import { GATE_ADDRESS, TARGET_ADDRESS, getWriteClient, readClient, waitForAcceptedOrFinalized } from "./client";
-import type { ProposalSummary } from "../types";
+import type { CapsuleSummary } from "../types";
 
 function gate(): `0x${string}` {
   if (!GATE_ADDRESS) throw new Error("VITE_EVIFIX_GATE_ADDRESS is not configured");
@@ -49,84 +49,60 @@ async function write(address: `0x${string}`, functionName: string, args: unknown
 }
 
 export const reads = {
-  proposalCount: () => readGate<bigint>("get_proposal_count"),
-  activeProposal: (targetAddress = target()) => readGate<bigint>("get_active_proposal", [targetAddress]),
-  currentVersion: (targetAddress = target()) => readGate<string>("get_current_version", [targetAddress]),
-  currentCodeHash: (targetAddress = target()) => readGate<string>("get_current_code_hash", [targetAddress]),
-  policyFingerprint: (targetAddress = target()) => readGate<string>("get_policy_fingerprint", [targetAddress]),
-  proposalSummary: async (proposalId: number | bigint): Promise<ProposalSummary> => {
-    const raw = await readGate<string>("get_proposal_summary", [BigInt(proposalId)]);
-    return JSON.parse(raw) as ProposalSummary;
+  capsuleCount: () => readGate<bigint>("get_capsule_count"),
+  activeCapsule: (targetAddress = target()) => readGate<bigint>("get_active_capsule", [targetAddress]),
+  baselineVersion: (targetAddress = target()) => readGate<string>("get_baseline_version", [targetAddress]),
+  baselineHash: (targetAddress = target()) => readGate<string>("get_baseline_hash", [targetAddress]),
+  profileHash: (targetAddress = target()) => readGate<string>("get_profile_hash", [targetAddress]),
+  generation: (targetAddress = target()) => readGate<bigint>("get_generation", [targetAddress]),
+  capsuleSummary: async (capsuleId: number | bigint): Promise<CapsuleSummary> => {
+    const raw = await readGate<string>("get_capsule_summary", [BigInt(capsuleId)]);
+    return JSON.parse(raw) as CapsuleSummary;
   },
 };
 
 export const writes = {
-  createProposal: (input: {
+  openPatchCapsule: (input: {
     targetAddress?: string;
     candidateVersion: string;
     candidateSourceUrl: string;
     candidateCode: string;
-    ciEvidenceUrl: string;
-    ciEvidenceId: string;
-    auditEvidenceUrl: string;
-    auditEvidenceId: string;
-  }) => write(gate(), "create_proposal", [
+    declaredIntent: string;
+    declaredDomains: string[];
+  }) => write(gate(), "open_patch_capsule", [
     input.targetAddress ?? target(),
     input.candidateVersion,
     input.candidateSourceUrl,
     new TextEncoder().encode(input.candidateCode),
-    input.ciEvidenceUrl,
-    input.ciEvidenceId,
-    input.auditEvidenceUrl,
-    input.auditEvidenceId,
+    input.declaredIntent,
+    JSON.stringify(input.declaredDomains),
   ]),
-  reviewProposal: (proposalId: number | bigint) => write(gate(), "review_proposal", [BigInt(proposalId)]),
-  cancelProposal: (proposalId: number | bigint) => write(gate(), "cancel_proposal", [BigInt(proposalId)]),
-  expireProposal: (proposalId: number | bigint) => write(gate(), "expire_proposal", [BigInt(proposalId)]),
-  reconcileInstall: (proposalId: number | bigint) => write(gate(), "reconcile_install", [BigInt(proposalId)]),
-  markExecutionTimeout: (proposalId: number | bigint) => write(gate(), "mark_execution_timeout", [BigInt(proposalId)]),
-  repairEvidence: (input: {
-    proposalId: number | bigint;
-    candidateSourceUrl: string;
-    ciEvidenceUrl: string;
-    ciEvidenceId: string;
-    auditEvidenceUrl: string;
-    auditEvidenceId: string;
-  }) => write(gate(), "repair_evidence", [
-    BigInt(input.proposalId),
-    input.candidateSourceUrl,
-    input.ciEvidenceUrl,
-    input.ciEvidenceId,
-    input.auditEvidenceUrl,
-    input.auditEvidenceId,
-  ]),
-  registerTarget: (input: {
-    constitution: string;
-    sourceAuthority: string;
-    ciAuthority: string;
-    auditAuthority: string;
+  submitEvidenceEpoch: (capsuleId: number | bigint, manifestUrl: string) =>
+    write(gate(), "submit_evidence_epoch", [BigInt(capsuleId), manifestUrl]),
+  reviewCapsule: (capsuleId: number | bigint) => write(gate(), "review_capsule", [BigInt(capsuleId)]),
+  cancelCapsule: (capsuleId: number | bigint) => write(gate(), "cancel_capsule", [BigInt(capsuleId)]),
+  expireCapsule: (capsuleId: number | bigint) => write(gate(), "expire_capsule", [BigInt(capsuleId)]),
+  reconcileActivation: (capsuleId: number | bigint) => write(gate(), "reconcile_activation", [BigInt(capsuleId)]),
+  markActivationTimeout: (capsuleId: number | bigint) => write(gate(), "mark_activation_timeout", [BigInt(capsuleId)]),
+  enrolTarget: (input: {
+    invariantProfileJson: string;
     sourcePrefix: string;
-    ciPrefix: string;
-    auditPrefix: string;
-    currentVersion: string;
-    currentSourceUrl: string;
-    currentCodeHash: string;
+    evidencePolicyJson: string;
+    baselineVersion: string;
+    baselineSourceUrl: string;
+    baselineCodeHash: string;
     maxEvidenceAgeSeconds: number;
-    proposalTtlSeconds: number;
-    executionTimeoutSeconds: number;
-  }) => write(target(), "register_with_evifix", [
-    input.constitution,
-    input.sourceAuthority,
-    input.ciAuthority,
-    input.auditAuthority,
+    capsuleTtlSeconds: number;
+    activationTimeoutSeconds: number;
+  }) => write(target(), "enrol_with_evifix", [
+    input.invariantProfileJson,
     input.sourcePrefix,
-    input.ciPrefix,
-    input.auditPrefix,
-    input.currentVersion,
-    input.currentSourceUrl,
-    input.currentCodeHash,
+    input.evidencePolicyJson,
+    input.baselineVersion,
+    input.baselineSourceUrl,
+    input.baselineCodeHash,
     input.maxEvidenceAgeSeconds,
-    input.proposalTtlSeconds,
-    input.executionTimeoutSeconds,
+    input.capsuleTtlSeconds,
+    input.activationTimeoutSeconds,
   ]),
 };

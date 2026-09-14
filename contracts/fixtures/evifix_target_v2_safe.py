@@ -7,22 +7,36 @@ import hashlib
 @gl.contract_interface
 class EviFixGate:
     class View:
-        def is_upgrade_authorized(self, proposal_id: u256, target: str, candidate_hash: str) -> bool: ...
-        def get_candidate_code(self, proposal_id: u256) -> bytes: ...
+        def verify_patch_receipt(
+            self,
+            capsule_id: u256,
+            target: str,
+            baseline_hash: str,
+            candidate_hash: str,
+            receipt_hash: str,
+        ) -> bool: ...
 
     class Write:
-        def confirm_install(self, proposal_id: u256, candidate_hash: str) -> None: ...
+        def record_activation(
+            self,
+            capsule_id: u256,
+            receipt_hash: str,
+            candidate_hash: str,
+            generation: u256,
+        ) -> None: ...
 
 
 class EviFixTarget(gl.Contract):
-    # v1 storage order preserved exactly.
+    # Exact v1 persistent prefix is preserved.
     owner: Address
     evifix_gate: Address
     product_name: str
     protected_value: str
-    installed_proposal_id: u256
-    installed_candidate_hash: str
-    registered_with_evifix: bool
+    baseline_hash: str
+    last_receipt_hash: str
+    last_capsule_id: u256
+    baseline_generation: u256
+    enrolled_with_evifix: bool
 
     def _only_owner(self) -> None:
         if gl.message.sender_address != self.owner:
@@ -31,53 +45,78 @@ class EviFixTarget(gl.Contract):
     @gl.public.write
     def set_protected_value(self, value: str) -> None:
         self._only_owner()
-        self.protected_value = value
+        self.protected_value = value.strip()
 
-    @gl.public.view
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_protected_value(self) -> str:
         return self.protected_value
 
-    @gl.public.view
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_product_name(self) -> str:
         return self.product_name
 
-    @gl.public.view
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_owner(self) -> Address:
         return self.owner
 
-    @gl.public.view
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_evifix_gate(self) -> Address:
         return self.evifix_gate
 
-    @gl.public.view
-    def release_fingerprint(self) -> str:
-        payload = f"{self.product_name}:{self.protected_value}:{self.installed_candidate_hash}"
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
+    def get_release_label(self) -> str:
+        return "EviFix safe fixture v2"
 
     @gl.public.write
-    def evifix_upgrade(self, proposal_id: u256, candidate_hash: str) -> None:
+    def apply_evifix_patch(
+        self,
+        capsule_id: u256,
+        receipt_hash: str,
+        baseline_hash: str,
+        candidate_hash: str,
+        candidate_code: bytes,
+    ) -> None:
         if gl.message.sender_address != self.evifix_gate:
-            raise gl.vm.UserError("Only EviFix gate may upgrade this target")
-        gate = EviFixGate(self.evifix_gate)
-        normalized_hash = candidate_hash.lower()
-        if not gate.view().is_upgrade_authorized(proposal_id, str(gl.message.contract_address), normalized_hash):
-            raise gl.vm.UserError("EviFix authorization is absent, stale, or mismatched")
-        candidate_code = gate.view().get_candidate_code(proposal_id)
+            raise gl.vm.UserError("Only EviFix may deliver a patch receipt")
+        normalized_baseline = baseline_hash.lower()
+        normalized_candidate = candidate_hash.lower()
+        if self.baseline_hash != normalized_baseline:
+            raise gl.vm.UserError("Local verified baseline does not match the receipt baseline")
         actual_hash = hashlib.sha256(candidate_code).hexdigest()
-        if actual_hash != normalized_hash:
-            raise gl.vm.UserError("Approved candidate bytes do not match approved hash")
-        self.installed_proposal_id = proposal_id
-        self.installed_candidate_hash = actual_hash
+        if actual_hash != normalized_candidate:
+            raise gl.vm.UserError("Delivered candidate bytes do not match the receipt candidate hash")
+        gate = EviFixGate(self.evifix_gate)
+        if not gate.view().verify_patch_receipt(
+            capsule_id,
+            str(gl.message.contract_address),
+            normalized_baseline,
+            normalized_candidate,
+            receipt_hash,
+        ):
+            raise gl.vm.UserError("Patch receipt is absent, stale, consumed, or mismatched")
+        next_generation = u256(int(self.baseline_generation) + 1)
+        self.baseline_hash = actual_hash
+        self.last_receipt_hash = receipt_hash
+        self.last_capsule_id = capsule_id
+        self.baseline_generation = next_generation
         root = gl.storage.Root.get()
         code = root.code.get()
         code.truncate()
         code.extend(candidate_code)
-        gate.emit(on="finalized").confirm_install(proposal_id, actual_hash)
+        gate.emit(on="finalized").record_activation(capsule_id, receipt_hash, actual_hash, next_generation)
 
-    @gl.public.view
-    def evifix_installed_proposal_id(self) -> u256:
-        return self.installed_proposal_id
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
+    def evifix_baseline_hash(self) -> str:
+        return self.baseline_hash
 
-    @gl.public.view
-    def evifix_installed_candidate_hash(self) -> str:
-        return self.installed_candidate_hash
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
+    def evifix_last_receipt_hash(self) -> str:
+        return self.last_receipt_hash
+
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
+    def evifix_last_capsule_id(self) -> u256:
+        return self.last_capsule_id
+
+    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
+    def evifix_generation(self) -> u256:
+        return self.baseline_generation

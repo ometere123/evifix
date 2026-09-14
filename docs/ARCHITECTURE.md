@@ -1,88 +1,126 @@
 # EviFix architecture
 
-## Purpose
+## Product primitive
 
-EviFix separates byte integrity, evidence provenance, semantic authorization, protocol finality, and installation verification. None of those layers may impersonate another.
+EviFix is a semantic continuity protocol. The security question is not merely "is this replacement safe?" It is:
 
-```text
-protected target
-  -> immutable EviFix policy
-  -> exact candidate bytes + SHA-256
-  -> immutable source commit
-  -> CI evidence envelope
-  -> independent audit evidence envelope
-  -> leader evidence verification + semantic review
-  -> validator independent reproduction
-  -> exact agreement on bindings and tri-state semantic vector
-  -> all PASS only
-  -> parent transaction finalizes
-  -> target re-checks authorization and candidate bytes
-  -> code replacement
-  -> finalized installation confirmation
-  -> VERIFIED
-```
+> Does this exact candidate extend the exact verified baseline while staying inside the target's declared and permitted semantic change envelope and preserving every registered invariant?
 
-## Contracts
+That question is represented directly in contract state.
 
-### `EviFixGate`
+## State objects
 
-The gate stores immutable target policies, proposals, evidence replay reservations, installed candidate hashes, lifecycle state, and review digests. It exposes no self-upgrade path.
+### InvariantProfile
 
-A policy binds three distinct evidence roles, immutable raw GitHub repository prefixes, the current version/source/hash, and bounded evidence/proposal/execution windows.
+A target self-anchors one profile through a finality-bound call from the protected target. The profile stores:
 
-### Protected target
+- owner and target;
+- profile hash;
+- JSON invariant rules;
+- permitted and forbidden semantic domains;
+- source repository prefix;
+- generic evidence policy;
+- verified baseline version, immutable source URL and SHA-256;
+- evidence age, capsule TTL and activation timeout;
+- baseline generation.
 
-The target installs the EviFix gate as its sole GenVM upgrader. The owner is intentionally not added to `root.upgraders`.
+The gate does not expose a profile mutation path. The target therefore cannot quietly relax rules after opening a capsule.
 
-Before code replacement the target asks the gate whether the exact proposal/hash is still authorized, fetches the exact frozen candidate bytes from the gate, re-hashes them, and persists the proposal/hash attestation. Installation confirmation is finality-bound.
+### PatchCapsule
 
-## Consensus boundary
+A capsule freezes:
 
-Only evidence retrieval and irreducibly semantic analysis run inside nondeterminism. No storage mutation or irreversible message is performed inside that block.
+- baseline generation/version/source/hash;
+- candidate version/source/exact bytes/hash;
+- developer-declared intent;
+- declared semantic domains;
+- profile hash;
+- evidence epoch state;
+- review hashes;
+- receipt state;
+- lifecycle deadlines.
 
-Leader and validators independently reproduce:
+Only one active capsule is allowed per target.
 
-- target and proposal ID;
-- parent and candidate SHA-256 values;
-- policy fingerprint;
-- evidence-set fingerprint;
-- result kind and error code;
-- overall decision;
-- every tri-state semantic field.
+### Evidence epoch
 
-Reasoning prose is not an authorization input.
+Evidence is not embedded as fixed CI/audit roles. A profile registers approved evidence publishers and required claim types. A capsule attaches one immutable evidence manifest per epoch.
 
-## Semantic vector
+The manifest contains typed claim descriptors. Each descriptor points to an immutable artifact whose SHA-256 is checked before the artifact is parsed. Artifacts are bound to the exact capsule, target, baseline, candidate and profile.
 
-Each field is one of `PASS`, `FAIL`, or `INCONCLUSIVE`:
+An inconclusive or repair-required capsule may advance to a new evidence epoch. The candidate and baseline remain frozen. If the new manifest resolves to byte-identical evidence, review returns `EVIDENCE_EPOCH_UNCHANGED` rather than allowing another semantic roll.
 
-1. storage layout
-2. authorization surface
-3. user rights
-4. upgrade authority
-5. external-call safety
-6. value flow
-7. evidence integrity
-8. consensus semantics
-9. finality safety
-10. liveness and recovery
-11. change scope
-12. constitution satisfaction
+### Semantic delta
 
-One `FAIL` rejects the proposal. With no failures, one `INCONCLUSIVE` blocks it. Only twelve `PASS` values produce `APPROVE`.
+The first Intelligent Consensus stage classifies each domain as:
 
-## Anti-grinding rule
+- `UNCHANGED`
+- `ADDED`
+- `REMOVED`
+- `RELAXED`
+- `TIGHTENED`
+- `MUTATED`
+- `INCONCLUSIVE`
 
-An `INCONCLUSIVE` proposal cannot simply invoke semantic review again. The owner must replace evidence with fresh immutable URLs and new evidence IDs. Candidate bytes, candidate hash, parent binding, target, and policy fingerprint stay frozen.
+Domains are storage, authorization, user rights, upgrade authority, external calls, value flow, evidence, consensus, finality, liveness and interface.
 
-## Frontend state model
+The gate then performs deterministic scope enforcement:
 
-The interface separates:
+1. any known changed domain in `forbidden_domains` => reject;
+2. any known changed domain not declared => reject;
+3. any known changed domain not permitted => reject;
+4. any semantically inconclusive domain => overall inconclusive unless an independent terminal violation already exists.
 
-- submission hash;
-- consensus status;
-- rollback/execution result;
-- proposal lifecycle state;
-- final installation state.
+### Invariant adjudication
 
-A transaction is never shown as successful solely because a hash was returned. Polling runs at a three-second interval and rollback payloads are surfaced to the user.
+The second Intelligent Consensus stage evaluates every target-specific invariant rule and evidence semantics as `PASS`, `FAIL` or `INCONCLUSIVE`.
+
+The contract derives the overall outcome. The model is not trusted to choose the final authorization state.
+
+### PatchReceipt
+
+A receipt is minted only after an all-pass decision. Its hash binds:
+
+- capsule id and target;
+- baseline hash;
+- candidate hash;
+- invariant profile hash;
+- semantic delta hash;
+- evidence bundle hash and epoch;
+- decision hash.
+
+Receipt state is `ISSUED` or `CONSUMED`.
+
+## Target handshake
+
+Candidate bytes are delivered only with the finalized patch receipt, and the target verifies the bound receipt before installation.
+
+On approval, the gate emits a finality-bound `apply_evifix_patch(...)` call carrying:
+
+- capsule id;
+- receipt hash;
+- baseline hash;
+- candidate hash;
+- exact candidate bytes.
+
+The target:
+
+1. requires the gate as sender;
+2. requires its local baseline to equal the receipt baseline;
+3. hashes the delivered candidate bytes;
+4. verifies the receipt through `verify_patch_receipt`;
+5. advances its local baseline attestation and generation;
+6. replaces code;
+7. emits a finalized `record_activation(...)` attestation.
+
+The gate advances its verified baseline only after checking the target's `LATEST_FINAL` state.
+
+## Recovery
+
+`reconcile_activation` repairs the case where target activation finalized but the callback did not update the gate.
+
+`mark_activation_timeout` can release an expired receipt only if final and non-final target attestations agree that the baseline did not advance. Any divergence keeps the capsule locked.
+
+## Upgrade authority
+
+The protected target appends only the EviFix gate to GenVM upgraders. The owner is deliberately not a code upgrader. The EviFix gate itself has no self-upgrade entry point and never appends itself or another address to its own upgrader set.

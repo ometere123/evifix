@@ -1,0 +1,15 @@
+{
+  "schema": "evifix-claim-v2",
+  "claim_id": "build-001",
+  "kind": "BUILD_RESULT",
+  "issuer": "build-lab",
+  "capsule_id": 1,
+  "target": "0x0000000000000000000000000000000000000000",
+  "baseline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "candidate_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "profile_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "result": "PASS",
+  "summary": "Production build completed successfully with the pinned toolchain.",
+  "published_at": 0,
+  "expires_at": 0
+}

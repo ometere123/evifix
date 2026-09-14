@@ -1,0 +1,15 @@
+{
+  "schema": "evifix-claim-v2",
+  "claim_id": "review-001",
+  "kind": "INDEPENDENT_REVIEW",
+  "issuer": "review-lab",
+  "capsule_id": 1,
+  "target": "0x0000000000000000000000000000000000000000",
+  "baseline_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "candidate_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "profile_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "result": "PASS",
+  "summary": "Independent reviewer found no blocking issue against the registered patch scope.",
+  "published_at": 0,
+  "expires_at": 0
+}

@@ -1,41 +1,60 @@
 # EviFix live evidence
 
-This file is intentionally a template until the final repository commit is deployed. Do not replace placeholders with guesses.
+Fill this file only with real, reproducible Studionet evidence. Do not invent values.
 
 ## Network
 
-- Network: GenLayer Studionet
-- Chain ID: 61999
-- RPC: `https://studio.genlayer.com/api`
-- Explorer: `https://explorer-studio.genlayer.com`
+- network: GenLayer Studionet
+- chain ID: 61999
+- chain hex: 0xF22F
+- RPC: https://studio.genlayer.com/api
+- explorer: https://explorer-studio.genlayer.com
 
 ## Deployment
 
-- Final source commit: `<commit-sha>`
-- Gate address: `<address>`
-- Protected target address: `<address>`
-- Registered owner: `<address>`
-- Target v1 SHA-256: `<sha256>`
-- Policy fingerprint: `<sha256>`
+- repository commit: `PENDING`
+- gate address: `PENDING`
+- protected target address: `PENDING`
+- target v1 SHA-256: `PENDING`
+- invariant profile hash: `PENDING`
+- baseline generation: `PENDING`
+- deployment transaction(s): `PENDING`
+- profile anchor transaction: `PENDING`
 
-## Canonical upgrade demonstration
+## Safe lifecycle
 
-- Proposal ID: `<id>`
-- Parent version/hash: `<version> / <sha256>`
-- Candidate version/hash: `<version> / <sha256>`
-- Evidence-set hash: `<sha256>`
-- Review digest: `<sha256>`
-- Final proposal status: `<status>`
+- capsule id: `PENDING`
+- candidate commit: `PENDING`
+- candidate SHA-256: `PENDING`
+- declared intent: `PENDING`
+- declared domains: `PENDING`
+- evidence manifest URL: `PENDING`
+- evidence bundle SHA-256: `PENDING`
+- evidence epoch: `PENDING`
+- semantic delta hash: `PENDING`
+- decision hash: `PENDING`
+- receipt hash: `PENDING`
+- review transaction: `PENDING`
+- activation/finality transaction: `PENDING`
+- resulting baseline generation: `PENDING`
+- resulting baseline SHA-256: `PENDING`
 
-## Transactions
+## Fail-closed demonstration
 
-- Target deployment: `<tx-hash>`
-- Policy registration: `<tx-hash>`
-- Proposal creation: `<tx-hash>`
-- Semantic review: `<tx-hash>`
-- Finality-bound upgrade child: `<tx-hash>`
-- Installation confirmation: `<tx-hash>`
+Record at least one real attempt showing that EviFix does not mint a receipt when the observed semantic delta is forbidden/undeclared or when evidence leaves an invariant inconclusive.
 
-## Verification notes
+- capsule id: `PENDING`
+- fixture/candidate: `PENDING`
+- observed failure: `PENDING`
+- final status: `PENDING`
+- transaction: `PENDING`
 
-Record the exact command/output or Studio evidence used to show that the deployed starting source matches the registered source hash and that the final target attestation equals the approved proposal ID and candidate hash.
+## Verification commands
+
+```bash
+python -m compileall -q contracts tests scripts
+genvm-lint lint contracts/evifix_gate.py
+genvm-lint lint contracts/evifix_target_v1.py
+pytest tests/direct -q
+cd frontend && npm install --no-audit --no-fund && npm run build
+```

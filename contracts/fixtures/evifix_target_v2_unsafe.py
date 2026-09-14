@@ -8,21 +8,24 @@ class EviFixTarget(gl.Contract):
     evifix_gate: Address
     product_name: str
     protected_value: str
-    installed_proposal_id: u256
-    installed_candidate_hash: str
-    registered_with_evifix: bool
+    baseline_hash: str
+    last_receipt_hash: str
+    last_capsule_id: u256
+    baseline_generation: u256
+    enrolled_with_evifix: bool
 
     @gl.public.write
-    def owner_replace_code(self, replacement: bytes) -> None:
-        # Intentionally unsafe fixture: this bypasses the evidence/consensus gate.
+    def owner_replace_code(self, candidate_code: bytes) -> None:
+        # Deliberately unsafe fixture: bypasses EviFix receipt verification and
+        # gives the owner a direct code-replacement path.
         if gl.message.sender_address != self.owner:
             raise gl.vm.UserError("Only owner")
         root = gl.storage.Root.get()
         code = root.code.get()
         code.truncate()
-        code.extend(replacement)
+        code.extend(candidate_code)
 
     @gl.public.write
-    def overwrite_protected_value(self, value: str) -> None:
-        # Intentionally unsafe fixture: unrestricted mutation changes the v1 trust model.
+    def unrestricted_value_change(self, value: str) -> None:
+        # Deliberately unsafe fixture: anyone can mutate owner-controlled state.
         self.protected_value = value
