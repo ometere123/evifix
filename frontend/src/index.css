@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root { color-scheme: dark; }
+  * { @apply box-border; }
+  html { scroll-behavior: smooth; }
+  body { @apply m-0 bg-ink text-gray-100 antialiased; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  button, input, textarea { font: inherit; }
+  ::selection { @apply bg-brand-500/30 text-white; }
+}
+
+@layer components {
+  .btn-primary { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-40; }
+  .btn-secondary { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-gray-800 bg-gray-900 px-4 py-2 text-sm font-medium text-gray-300 transition hover:border-gray-700 hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40; }
+  .icon-btn { @apply grid h-9 w-9 place-items-center rounded-lg border border-gray-800 bg-gray-900 text-gray-400 transition hover:text-white; }
+  .input { @apply rounded-lg border border-gray-800 bg-gray-950 px-3 py-2.5 text-sm text-gray-100 outline-none placeholder:text-gray-700 focus:border-brand-500/70 focus:ring-2 focus:ring-brand-500/10; }
+  .panel { @apply rounded-2xl border border-gray-800 bg-gray-950/70; }
+  .panel-title { @apply text-lg font-semibold text-white; }
+  .panel-copy { @apply mt-1 max-w-3xl text-sm leading-6 text-gray-500; }
+  .icon-tile { @apply grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-brand-500/20 bg-brand-500/10 text-brand-300; }
+  .field-label { @apply text-xs font-medium text-gray-400; }
+  .section-kicker { @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-300; }
+  .eyebrow { @apply inline-flex items-center gap-2 rounded-full border border-brand-500/20 bg-brand-500/5 px-3 py-1.5 text-xs font-semibold text-brand-200; }
+  .error-box { @apply rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-red-300; }
+  .tab-btn { @apply whitespace-nowrap rounded-lg px-3 py-2 text-xs font-medium capitalize text-gray-500 transition hover:text-gray-200; }
+  .tab-btn-active { @apply bg-gray-900 text-white; }
+  .status { @apply inline-flex rounded-full border border-gray-800 bg-gray-900 px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] text-gray-400; }
+  .status-pass { @apply border-success/20 bg-success/10 text-green-300; }
+  .status-fail { @apply border-danger/20 bg-danger/10 text-red-300; }
+  .status-pending { @apply border-brand-500/20 bg-brand-500/10 text-brand-200; }
+  .status-inconclusive { @apply border-warning/20 bg-warning/10 text-amber-200; }
+}
+
+.hero-glow { position: absolute; inset: -30% auto auto 50%; width: 50rem; height: 50rem; transform: translateX(-50%); border-radius: 9999px; background: radial-gradient(circle, rgba(249,115,22,.16), rgba(249,115,22,0) 66%); pointer-events: none; }
