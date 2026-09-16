@@ -54,7 +54,11 @@ class EviFixTarget(gl.Contract):
 
     def __init__(self, evifix_gate: Address, product_name: str, initial_value: str):
         self.owner = gl.message.sender_address
-        self.evifix_gate = evifix_gate
+        # GenLayer's external constructor boundary may deliver an Address as
+        # its serialized hexadecimal string form. Normalize before persisting
+        # so the storage field remains an Address in every execution mode.
+        evifix_gate_address = Address(str(evifix_gate))
+        self.evifix_gate = evifix_gate_address
         self.product_name = product_name
         self.protected_value = initial_value
         self.baseline_hash = ""
@@ -65,7 +69,7 @@ class EviFixTarget(gl.Contract):
 
         # EviFix is the sole GenVM code upgrader. The owner is deliberately not an upgrader.
         root = gl.storage.Root.get()
-        root.upgraders.get().append(evifix_gate)
+        root.upgraders.get().append(evifix_gate_address)
 
     def _only_owner(self) -> None:
         if gl.message.sender_address != self.owner:
