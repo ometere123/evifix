@@ -55,8 +55,8 @@ def test_funding_binds_capsule_opener_and_exact_value(direct_vm, direct_deploy, 
         2_000_000_300,
     )
     stored = escrow.get_escrow(escrow_id)
-    assert stored.sponsor == direct_alice
-    assert stored.beneficiary == direct_bob
+    assert str(stored.sponsor).lower() == _address(direct_alice).lower()
+    assert str(stored.beneficiary).lower() == _address(direct_bob).lower()
     assert stored.amount == 10**15
     assert escrow.get_escrow_for_capsule(GATE_ADDRESS, 1) == escrow_id
 
@@ -80,6 +80,7 @@ def test_release_requires_verified_status_and_beneficiary(direct_vm, direct_depl
     direct_vm.value = 10**15
     escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
+    direct_vm.warp("2033-05-18T03:33:30Z")
     direct_vm.sender = direct_bob
     with direct_vm.expect_revert("patch is not finalized as verified"):
         escrow.release_patch(escrow_id)
@@ -90,11 +91,12 @@ def test_release_requires_verified_status_and_beneficiary(direct_vm, direct_depl
 
 
 def test_release_and_refund_are_terminal_and_accounted(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
-    escrow, _ = _deploy_escrow(direct_deploy, direct_charlie, direct_bob, status="VERIFIED")
+    escrow, summary = _deploy_escrow(direct_deploy, direct_charlie, direct_bob, status="READY")
     direct_vm.sender = direct_alice
     direct_vm.value = 10**15
     escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
+    summary["status"] = "VERIFIED"
     direct_vm.warp("2033-05-18T03:33:30Z")
     direct_vm.sender = direct_bob
     escrow.release_patch(escrow_id)
@@ -111,10 +113,11 @@ def test_release_and_refund_are_terminal_and_accounted(direct_vm, direct_deploy,
 
 
 def test_terminal_failure_refunds_sponsor(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
-    escrow, _ = _deploy_escrow(direct_deploy, direct_charlie, direct_bob, status="REJECTED")
+    escrow, summary = _deploy_escrow(direct_deploy, direct_charlie, direct_bob, status="READY")
     direct_vm.sender = direct_alice
     direct_vm.value = 10**15
     escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
+    summary["status"] = "REJECTED"
     escrow.refund_patch(escrow_id)
     stored = escrow.get_escrow(escrow_id)
     assert stored.status == "REFUNDED"
