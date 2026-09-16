@@ -129,7 +129,7 @@ export function Workspace() {
 
       <section className="mt-6 panel p-5 sm:p-6">
         <div className="flex items-center justify-between"><div><p className="section-kicker">transaction center</p><h2 className="mt-2 text-lg font-semibold text-white">This session</h2></div><span className="text-xs text-gray-600">success only after accepted/finalized + no rollback</span></div>
-        <div className="mt-4 space-y-2">{transactions.length ? transactions.map(tx => <div key={tx.hash} className="grid gap-1 rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-3 sm:grid-cols-[1fr_auto_auto] sm:items-center"><span className="text-sm text-gray-300">{tx.action}</span><span className="font-mono text-xs text-gray-600">{shortHash(tx.hash, 10, 8)}</span><span className="text-xs font-semibold text-success">{tx.status}</span></div>) : <p className="text-sm text-gray-600">No writes submitted in this browser session.</p>}</div>
+        <div className="mt-4 space-y-2">{transactions.length ? transactions.map(tx => <div key={tx.hash} className="grid gap-1 rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-3 sm:grid-cols-[1fr_auto_auto] sm:items-center"><span className="text-sm text-gray-300">{tx.action}</span><a className="font-mono text-xs text-brand-300 underline decoration-brand-500/40 underline-offset-4" href={`${NETWORK.explorer}/tx/${tx.hash}`} target="_blank" rel="noreferrer">{shortHash(tx.hash, 10, 8)} · Explorer</a><span className="text-xs font-semibold text-success">{tx.status}</span></div>) : <p className="text-sm text-gray-600">No writes submitted in this browser session.</p>}</div>
       </section>
     </main>
   );
