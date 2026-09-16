@@ -129,7 +129,11 @@ class EviFixTarget(gl.Contract):
         self.baseline_hash = normalized_hash
         self.enrolled_with_evifix = True
 
-        EviFixGate(self.evifix_gate).emit(on="finalized").anchor_target(
+        # Resolve the target contract through GenVM's canonical cross-contract
+        # handle before emitting the finalized anchor message. This keeps the
+        # message sender as this Target IC on Studionet.
+        gate = gl.get_contract_at(self.evifix_gate)
+        gate.emit(on="finalized").anchor_target(
             self.owner,
             invariant_profile_json,
             source_prefix,
