@@ -94,7 +94,7 @@ def test_release_requires_verified_status_and_beneficiary(direct_vm, direct_depl
         escrow.release_patch(escrow_id)
 
     direct_vm.sender = direct_charlie
-    with direct_vm.expect_revert("only beneficiary can claim escrow"):
+    with pytest.raises(AssertionError, match="only beneficiary can claim escrow"):
         escrow.release_patch(escrow_id)
 
 
