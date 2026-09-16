@@ -88,8 +88,8 @@ def test_release_requires_verified_status_and_beneficiary(direct_vm, direct_depl
     escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
     direct_vm.warp("2033-05-18T03:38:30Z")
-    _set_contract_time("2033-05-18T03:38:30Z")
     direct_vm.sender = direct_bob
+    _set_contract_time("2033-05-18T03:38:30Z")
     with pytest.raises(AssertionError, match="patch is not finalized as verified"):
         escrow.release_patch(escrow_id)
 
@@ -106,8 +106,8 @@ def test_release_and_refund_are_terminal_and_accounted(direct_vm, direct_deploy,
 
     summary["status"] = "VERIFIED"
     direct_vm.warp("2033-05-18T03:38:30Z")
-    _set_contract_time("2033-05-18T03:38:30Z")
     direct_vm.sender = direct_bob
+    _set_contract_time("2033-05-18T03:38:30Z")
     escrow.release_patch(escrow_id)
     stored = escrow.get_escrow(escrow_id)
     assert stored.status == "RELEASED"
@@ -117,7 +117,7 @@ def test_release_and_refund_are_terminal_and_accounted(direct_vm, direct_deploy,
     assert accounting["total_released"] == 10**15
     assert accounting["total_refunded"] == 0
     assert accounting["total_unsettled"] == 0
-    with direct_vm.expect_revert("escrow is already settled"):
+    with pytest.raises(AssertionError, match="escrow is already settled"):
         escrow.release_patch(escrow_id)
 
 
