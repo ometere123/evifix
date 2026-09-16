@@ -1,6 +1,8 @@
 import json
 import sys
 
+import pytest
+
 
 def _address(value) -> str:
     if isinstance(value, (bytes, bytearray)):
@@ -65,12 +67,12 @@ def test_funding_rejects_wrong_beneficiary_and_duplicate_capsule(direct_vm, dire
     escrow, _ = _deploy_escrow(direct_deploy, direct_charlie, direct_bob)
     direct_vm.sender = direct_alice
     direct_vm.value = 10**15
-    with direct_vm.expect_revert("beneficiary must be the capsule opener"):
+    with pytest.raises(AssertionError, match="beneficiary must be the capsule opener"):
         escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_charlie), 2_000_000_300)
 
     escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
     assert escrow_id == 1
-    with direct_vm.expect_revert("capsule already has escrow"):
+    with pytest.raises(AssertionError, match="capsule already has escrow"):
         escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
 
@@ -80,9 +82,9 @@ def test_release_requires_verified_status_and_beneficiary(direct_vm, direct_depl
     direct_vm.value = 10**15
     escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
-    direct_vm.warp("2033-05-18T03:33:30Z")
+    direct_vm.warp("2033-05-18T03:38:30Z")
     direct_vm.sender = direct_bob
-    with direct_vm.expect_revert("patch is not finalized as verified"):
+    with pytest.raises(AssertionError, match="patch is not finalized as verified"):
         escrow.release_patch(escrow_id)
 
     direct_vm.sender = direct_charlie
@@ -97,7 +99,7 @@ def test_release_and_refund_are_terminal_and_accounted(direct_vm, direct_deploy,
     escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
     summary["status"] = "VERIFIED"
-    direct_vm.warp("2033-05-18T03:33:30Z")
+    direct_vm.warp("2033-05-18T03:38:30Z")
     direct_vm.sender = direct_bob
     escrow.release_patch(escrow_id)
     stored = escrow.get_escrow(escrow_id)
