@@ -36,4 +36,6 @@ The contract does not outsource authorization to an LLM. Deterministic code veri
 7. open an adversarial capsule or run a fail-closed fixture where upgrade authority/authorization changes unexpectedly;
 8. show the observed delta and terminal rejection or an inconclusive case that requires a fresh evidence epoch.
 
-No deployment claim should be made until `docs/LIVE_EVIDENCE.md` contains real Studionet 61999 data.
+The gate, protected target and deterministic escrow are deployed on Studionet 61999, and the production frontend is
+available at https://evifix.vercel.app. See `docs/LIVE_EVIDENCE.md` for the exact addresses, source hashes and finalized
+deployment transactions. Lifecycle claims remain limited to states actually observed there.

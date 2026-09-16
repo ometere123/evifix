@@ -117,7 +117,7 @@ The economically consequential contest is the GenLayer review/appeal boundary: v
 - `frontend/` — operator UI for profile anchoring, patch capsules, evidence epochs, review and activation recovery.
 - `docs/ARCHITECTURE.md` — state machine and trust boundaries.
 - `docs/SECURITY_MODEL.md` — authorization invariants and failure model.
-- `docs/LIVE_EVIDENCE.md` — deployment and transaction evidence template. Do not fabricate it.
+- `docs/LIVE_EVIDENCE.md` — observed Studionet deployment and lifecycle evidence; unobserved fields remain explicit.
 - `AGENT_HANDOFF.md` — exact live completion instructions for Codex.
 
 ## Local verification
@@ -137,6 +137,15 @@ npm run build
 
 The repository CI also verifies the Studionet 61999 lock.
 
-## Deployment evidence
+## Current deployment
 
-This repository intentionally does not contain invented contract addresses or transaction hashes. Deployment of the gate, protected target and optional escrow, real immutable evidence artifacts, the safe lifecycle and the fail-closed demonstration must be performed live on Studionet 61999 and recorded in `docs/LIVE_EVIDENCE.md`.
+The current build is deployed and readable on GenLayer Studionet (chain 61999):
+
+- gate: `0x2531242431cB4a630008cDe8e708549397DBdb20`
+- protected target: `0x9b0C5BF4b296f05376293F85e580891b8e8A6AD8`
+- deterministic escrow: `0x8FC0b0e055049E7339228B06a1c943659C82dFA8`
+- deployment transactions and source hashes: [docs/LIVE_EVIDENCE.md](docs/LIVE_EVIDENCE.md)
+- production frontend: [evifix.vercel.app](https://evifix.vercel.app)
+
+Profile enrollment, patch review, activation and escrow lifecycle evidence are not implied by deployment and remain
+marked `PENDING` in the live evidence record until observed in finalized transactions.
