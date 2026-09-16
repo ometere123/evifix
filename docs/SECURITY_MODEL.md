@@ -4,6 +4,12 @@
 
 EviFix protects semantic continuity across Intelligent Contract code replacement.
 
+## Escrow boundary
+
+The optional `EviFixEscrow` contract makes the finalized semantic outcome financially consequential without moving arithmetic into the model. It accepts exact native GEN funding for one gate/capsule pair, binds the beneficiary to the capsule opener, releases only for finalized `VERIFIED`, and refunds only for a finalized failure or an expired pending capsule. The GenLayer review and network appeal process is the contest boundary; escrow cannot be released against a non-verified gate state.
+
+Its conservation invariant is `total_funded = total_released + total_refunded + total_unsettled`. Each escrow is terminal exactly once, and accounting is updated before transfer emission.
+
 The protocol aims to ensure that an activated patch is the exact candidate that was reviewed, extends the exact currently verified baseline, stays within the target's permitted change envelope, preserves every registered invariant, is backed by independently published evidence, and activates only through a finalized receipt.
 
 ## Authorization conditions

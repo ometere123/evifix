@@ -1,5 +1,5 @@
-import { GATE_ADDRESS, TARGET_ADDRESS, getWriteClient, readClient, waitForAcceptedOrFinalized } from "./client";
-import type { CapsuleSummary } from "../types";
+import { ESCROW_ADDRESS, GATE_ADDRESS, TARGET_ADDRESS, assertStudionetBeforeWrite, getWriteClient, readClient, waitForAcceptedOrFinalized } from "./client";
+import type { CapsuleSummary, Escrow } from "../types";
 
 function gate(): `0x${string}` {
   if (!GATE_ADDRESS) throw new Error("VITE_EVIFIX_GATE_ADDRESS is not configured");
@@ -9,6 +9,11 @@ function gate(): `0x${string}` {
 function target(): `0x${string}` {
   if (!TARGET_ADDRESS) throw new Error("VITE_EVIFIX_TARGET_ADDRESS is not configured");
   return TARGET_ADDRESS;
+}
+
+function escrow(): `0x${string}` {
+  if (!ESCROW_ADDRESS) throw new Error("VITE_EVIFIX_ESCROW_ADDRESS is not configured");
+  return ESCROW_ADDRESS;
 }
 
 async function readWithTimeout<T>(label: string, fn: () => Promise<T>, timeoutMs = 45_000): Promise<T> {
@@ -36,13 +41,14 @@ async function readGate<T>(functionName: string, args: unknown[] = []) {
   });
 }
 
-async function write(address: `0x${string}`, functionName: string, args: unknown[]) {
+async function write(address: `0x${string}`, functionName: string, args: unknown[], value = 0n) {
+  await assertStudionetBeforeWrite();
   const client = getWriteClient();
   const hash = await client.writeContract({
     address,
     functionName,
     args: args as any[],
-    value: 0n,
+    value,
   }) as `0x${string}`;
   const receipt = await waitForAcceptedOrFinalized(hash);
   return { hash, status: receipt.status };
@@ -59,6 +65,12 @@ export const reads = {
     const raw = await readGate<string>("get_capsule_summary", [BigInt(capsuleId)]);
     return JSON.parse(raw) as CapsuleSummary;
   },
+  escrowForCapsule: (capsuleId: number | bigint) => readWithTimeout("get_escrow_for_capsule", async () => {
+    return await readClient.readContract({ address: escrow(), functionName: "get_escrow_for_capsule", args: [gate(), BigInt(capsuleId)] }) as unknown as bigint;
+  }),
+  escrow: (escrowId: number | bigint): Promise<Escrow> => readWithTimeout("get_escrow", async () => {
+    return await readClient.readContract({ address: escrow(), functionName: "get_escrow", args: [BigInt(escrowId)] }) as unknown as Escrow;
+  }),
 };
 
 export const writes = {
@@ -105,4 +117,8 @@ export const writes = {
     input.capsuleTtlSeconds,
     input.activationTimeoutSeconds,
   ]),
+  fundPatch: (capsuleId: number | bigint, beneficiary: string, claimAfter: number | bigint, amount: bigint) =>
+    write(escrow(), "fund_patch", [gate(), BigInt(capsuleId), beneficiary, BigInt(claimAfter)], amount),
+  releasePatch: (escrowId: number | bigint) => write(escrow(), "release_patch", [BigInt(escrowId)]),
+  refundPatch: (escrowId: number | bigint) => write(escrow(), "refund_patch", [BigInt(escrowId)]),
 };

@@ -10,6 +10,10 @@ That question is represented directly in contract state.
 
 ## State objects
 
+### Patch reward escrow
+
+`EviFixEscrow` is a separate custody contract so financial state cannot weaken the gate's semantic state machine. A sponsor funds one gate/capsule pair with an exact native GEN value. The beneficiary is deterministically bound to the capsule opener. The escrow stores the gate, capsule, sponsor, beneficiary, amount, immutable activation deadline and terminal accounting. Release is allowed only when the gate reports `VERIFIED` and the claim window has opened. A finalized rejection, cancellation, expiry or activation failure refunds the sponsor; a still-pending capsule cannot be refunded until its activation deadline has expired. All accounting is updated before transfer emission.
+
 ### InvariantProfile
 
 A target self-anchors one profile through a finality-bound call from the protected target. The profile stores:
@@ -120,6 +124,8 @@ The gate advances its verified baseline only after checking the target's `LATEST
 `reconcile_activation` repairs the case where target activation finalized but the callback did not update the gate.
 
 `mark_activation_timeout` can release an expired receipt only if final and non-final target attestations agree that the baseline did not advance. Any divergence keeps the capsule locked.
+
+Escrow recovery is similarly bounded: a funded escrow can settle once only. A verified capsule has a beneficiary-only release path; a non-verified terminal capsule has a sponsor-only refund path. No frontend or arbitrary caller can choose the financial outcome.
 
 ## Upgrade authority
 

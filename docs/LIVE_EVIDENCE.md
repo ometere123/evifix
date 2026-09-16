@@ -16,10 +16,12 @@ Fill this file only with real, reproducible Studionet evidence. Do not invent va
 - gate address: `PENDING`
 - protected target address: `PENDING`
 - target v1 SHA-256: `PENDING`
+- escrow address: `PENDING`
 - invariant profile hash: `PENDING`
 - baseline generation: `PENDING`
 - deployment transaction(s): `PENDING`
 - profile anchor transaction: `PENDING`
+- escrow deployment transaction: `PENDING`
 
 ## Safe lifecycle
 
@@ -38,6 +40,16 @@ Fill this file only with real, reproducible Studionet evidence. Do not invent va
 - activation/finality transaction: `PENDING`
 - resulting baseline generation: `PENDING`
 - resulting baseline SHA-256: `PENDING`
+
+## Escrow lifecycle
+
+- escrow id: `PENDING`
+- sponsor: `PENDING`
+- beneficiary: `PENDING`
+- funded amount: `PENDING`
+- funding transaction: `PENDING`
+- release/refund transaction: `PENDING`
+- final escrow accounting: `PENDING`
 
 ## Fail-closed demonstration
 

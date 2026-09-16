@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, FileCheck2, RefreshCw, ShieldCheck, TimerReset } from "lucide-react";
-import { GATE_ADDRESS, NETWORK, TARGET_ADDRESS } from "../lib/client";
+import { ESCROW_ADDRESS, GATE_ADDRESS, NETWORK, TARGET_ADDRESS } from "../lib/client";
 import { reads, writes } from "../lib/contracts";
 import { shortHash } from "../lib/validation";
 import { useWallet } from "../lib/WalletContext";
-import type { CapsuleSummary, TransactionRecord } from "../types";
+import type { CapsuleSummary, Escrow, TransactionRecord } from "../types";
 import { Lifecycle } from "./Lifecycle";
 import { ProposalComposer } from "./ProposalComposer";
 import { SetupPanel } from "./SetupPanel";
+import { formatGen, parseGen } from "../lib/escrow";
 
-const TABS = ["overview", "new patch", "evidence & review", "activation", "setup"] as const;
+const TABS = ["overview", "new patch", "evidence & review", "activation", "escrow", "setup"] as const;
 type Tab = typeof TABS[number];
 
 export function Workspace() {
@@ -22,6 +23,8 @@ export function Workspace() {
   const [count, setCount] = useState(0);
   const [activeId, setActiveId] = useState(0);
   const [capsule, setCapsule] = useState<CapsuleSummary | null>(null);
+  const [escrowId, setEscrowId] = useState<bigint>(0n);
+  const [escrow, setEscrow] = useState<Escrow | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
@@ -42,7 +45,15 @@ export function Workspace() {
       setBaselineHash(currentHash);
       setProfileHash(fingerprint);
       setGeneration(Number(currentGeneration));
-      setCapsule(Number(active) > 0 ? await reads.capsuleSummary(active) : null);
+      const nextCapsule = Number(active) > 0 ? await reads.capsuleSummary(active) : null;
+      setCapsule(nextCapsule);
+      if (ESCROW_ADDRESS && nextCapsule) {
+        const nextEscrowId = await reads.escrowForCapsule(active);
+        setEscrowId(nextEscrowId);
+        setEscrow(nextEscrowId > 0n ? await reads.escrow(nextEscrowId) : null);
+      } else {
+        setEscrowId(0n); setEscrow(null);
+      }
     } catch (err: any) {
       setError(String(err?.message ?? err));
     } finally { setLoading(false); }
@@ -125,6 +136,8 @@ export function Workspace() {
         </section>
       ) : null}
 
+      {tab === "escrow" ? <EscrowPanel capsule={capsule} escrowId={escrowId} escrow={escrow} disabled={!canWrite} onComplete={onComplete} /> : null}
+
       {tab === "setup" ? <SetupPanel disabled={!canWrite} onComplete={onComplete} /> : null}
 
       <section className="mt-6 panel p-5 sm:p-6">
@@ -137,6 +150,41 @@ export function Workspace() {
 
 function Metric({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-4"><p className="text-[11px] uppercase tracking-[0.16em] text-gray-600">{label}</p><p className={`mt-2 text-sm text-gray-200 ${mono ? "font-mono text-xs" : "font-medium"}`}>{value || "—"}</p></div>;
+}
+
+function EscrowPanel({ capsule, escrowId, escrow, disabled, onComplete }: { capsule: CapsuleSummary | null; escrowId: bigint; escrow: Escrow | null; disabled: boolean; onComplete: (hash: string, action: string, status: string) => void }) {
+  const [amount, setAmount] = useState("0.001");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const canFund = Boolean(capsule && !escrow && capsule.opener && ESCROW_ADDRESS);
+  async function fund() {
+    if (!capsule) return;
+    setBusy(true); setError("");
+    try {
+      const amountWei = parseGen(amount);
+      const claimAfter = BigInt(capsule.expires_at + 300);
+      const tx = await writes.fundPatch(capsule.capsule_id, capsule.opener, claimAfter, amountWei);
+      onComplete(tx.hash, "Fund patch escrow", tx.status);
+    } catch (reason: any) { setError(String(reason?.message ?? reason)); }
+    finally { setBusy(false); }
+  }
+  async function settle(kind: "release" | "refund") {
+    if (!escrow) return;
+    setBusy(true); setError("");
+    try {
+      const tx = kind === "release" ? await writes.releasePatch(escrowId) : await writes.refundPatch(escrowId);
+      onComplete(tx.hash, kind === "release" ? "Release patch escrow" : "Refund patch escrow", tx.status);
+    } catch (reason: any) { setError(String(reason?.message ?? reason)); }
+    finally { setBusy(false); }
+  }
+  return <section className="panel p-5 sm:p-6">
+    <div className="flex items-start gap-3"><span className="icon-tile"><ShieldCheck className="h-4 w-4" /></span><div><h2 className="panel-title">Patch reward escrow</h2><p className="panel-copy">A sponsor can attach GEN to this exact capsule. It releases only after the gate and target reach finalized VERIFIED, and refunds on a finalized failure or expired capsule. Semantic outcome remains decided by GenLayer consensus.</p></div></div>
+    {!ESCROW_ADDRESS ? <p className="error-box mt-6">Escrow deployment is not configured yet. Set VITE_EVIFIX_ESCROW_ADDRESS after deploying the escrow contract.</p> : null}
+    {!capsule ? <p className="mt-6 text-sm text-gray-500">Open a patch capsule before funding its reward.</p> : null}
+    {capsule && !escrow ? <div className="mt-6 rounded-xl border border-gray-800 bg-gray-900/40 p-4"><Metric label="Bound beneficiary" value={capsule.opener} mono /><label className="mt-4 block space-y-2"><span className="field-label">Escrow amount (GEN)</span><input className="input w-full" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} /></label><p className="mt-3 text-xs text-gray-600">Claim opens at least five minutes after the immutable capsule deadline. The connected sponsor wallet must differ from the beneficiary.</p><button disabled={disabled || busy || !canFund} onClick={() => void fund()} className="btn-primary mt-4">{busy ? "Funding" : `Fund ${amount || "0"} GEN escrow`}</button></div> : null}
+    {escrow ? <div className="mt-6 grid gap-3 sm:grid-cols-2"><Metric label="Escrow status" value={escrow.status} /><Metric label="Amount" value={formatGen(escrow.amount)} /><Metric label="Sponsor" value={escrow.sponsor} mono /><Metric label="Beneficiary" value={escrow.beneficiary} mono /><Metric label="Claim after" value={new Date(Number(escrow.claim_after) * 1000).toISOString()} mono /><Metric label="Terminal reason" value={escrow.terminal_reason || "Awaiting finalized gate result"} />{escrow.status === "FUNDED" ? <div className="flex flex-wrap gap-2 sm:col-span-2"><button disabled={disabled || busy} onClick={() => void settle("release")} className="btn-primary">Release after VERIFIED</button><button disabled={disabled || busy} onClick={() => void settle("refund")} className="btn-secondary">Refund on terminal failure</button></div> : null}</div> : null}
+    {error ? <p className="error-box mt-4" role="alert">{error}</p> : null}
+  </section>;
 }
 
 function EvidenceEpochBox({ capsule, disabled, onComplete }: { capsule: CapsuleSummary; disabled: boolean; onComplete: (hash: string, action: string, status: string) => void }) {

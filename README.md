@@ -25,6 +25,8 @@ The protocol has five first-class objects:
 4. **Semantic delta** — validator-derived classification of what actually changed in storage, authorization, user rights, upgrade authority, external calls, value flow, evidence, consensus, finality, liveness, and interface.
 5. **PatchReceipt** — authorization bound to the target, baseline, candidate, invariant profile, semantic delta, evidence bundle and evidence epoch.
 
+6. **Patch reward escrow** — an optional deterministic GEN escrow binds a sponsor's reward to one capsule. The capsule opener is the beneficiary; release requires finalized `VERIFIED` activation, while rejection, cancellation, expiry or activation failure can refund the sponsor. The escrow never interprets source text or selects a payout.
+
 A successful activation advances the target's verified baseline generation. The next patch must extend that exact baseline.
 
 ## Why this is fail-closed
@@ -92,10 +94,24 @@ finalized activation attestation
 verified baseline generation N + 1
 ```
 
+## Escrow flow
+
+```text
+open capsule → sponsor funds exact capsule escrow
+        ↓
+GenLayer reviews source/evidence and may be appealed through consensus
+        ↓
+VERIFIED activation → beneficiary releases exact escrow
+terminal non-verified outcome → sponsor refunds exact escrow
+```
+
+The economically consequential contest is the GenLayer review/appeal boundary: validators must agree on the semantic result before a receipt can reach `VERIFIED`. Deterministic escrow code only reads that finalized gate state and performs exact transfers. There is no client-side payout authority.
+
 ## Repository
 
 - `contracts/evifix_gate.py` — invariant profile, patch capsule, evidence epoch, two-stage semantic review, receipt issuance and baseline reconciliation.
 - `contracts/evifix_target_v1.py` — receipt-consuming protected target and target-side baseline continuity.
+- `contracts/evifix_escrow.py` — deterministic GEN custody linked to finalized gate outcomes.
 - `contracts/fixtures/` — compatible and adversarial candidate fixtures.
 - `tests/direct/` — Direct Mode and source-level regression checks.
 - `frontend/` — operator UI for profile anchoring, patch capsules, evidence epochs, review and activation recovery.
@@ -112,7 +128,10 @@ genvm-lint lint contracts/evifix_gate.py
 genvm-lint lint contracts/evifix_target_v1.py
 pytest tests/direct -q
 cd frontend
-npm install --no-audit --no-fund
+npm ci --no-audit --no-fund
+npm run lint
+npm run typecheck
+npm test
 npm run build
 ```
 
@@ -120,4 +139,4 @@ The repository CI also verifies the Studionet 61999 lock.
 
 ## Deployment evidence
 
-This repository intentionally does not contain invented contract addresses or transaction hashes. Deployment, real immutable evidence artifacts, the safe lifecycle and the fail-closed demonstration must be performed live on Studionet 61999 and recorded in `docs/LIVE_EVIDENCE.md`.
+This repository intentionally does not contain invented contract addresses or transaction hashes. Deployment of the gate, protected target and optional escrow, real immutable evidence artifacts, the safe lifecycle and the fail-closed demonstration must be performed live on Studionet 61999 and recorded in `docs/LIVE_EVIDENCE.md`.

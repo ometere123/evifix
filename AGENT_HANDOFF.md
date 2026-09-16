@@ -52,6 +52,7 @@ Do not weaken these properties while fixing deployment or SDK compatibility:
 17. baseline advancement is recorded only after finalized target attestation;
 18. the target owner is not a GenVM code upgrader;
 19. the EviFix gate has no self-upgrade entry point.
+20. optional reward escrow is a separate contract with exact funding, one-time release/refund, and no client-side financial authority.
 
 ## Work sequence
 
@@ -65,7 +66,8 @@ Do not weaken these properties while fixing deployment or SDK compatibility:
 3. Fix any real SDK/Direct Mode compatibility issue without weakening the invariants above.
 4. Deploy `contracts/evifix_gate.py` to Studionet 61999 using the funded deployer wallet available to you.
 5. Deploy `contracts/evifix_target_v1.py` with the real gate address.
-6. Commit the final source before preparing immutable source/evidence URLs. Compute SHA-256 from the exact bytes served by the immutable raw GitHub commit URL.
+6. Deploy `contracts/evifix_escrow.py` and record its address before enabling the escrow UI.
+7. Commit the final source before preparing immutable source/evidence URLs. Compute SHA-256 from the exact bytes served by the immutable raw GitHub commit URL.
 7. Create the final invariant profile and evidence policy. Use genuinely distinct evidence publishers so the independent-review publisher has a different GitHub owner from the source publisher.
 8. Call `enrol_with_evifix(...)` on the target and wait for the profile anchor to finalize.
 9. Set the real frontend environment values:

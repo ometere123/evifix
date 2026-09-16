@@ -15,6 +15,7 @@ export type CapsuleStatus =
 export interface CapsuleSummary {
   capsule_id: number;
   target: string;
+  opener: string;
   baseline_generation: number;
   baseline_version: string;
   baseline_code_hash: string;
@@ -35,6 +36,22 @@ export interface CapsuleSummary {
   expires_at: number;
   reviewed_at: number;
   activation_deadline: number;
+}
+
+export interface Escrow {
+  escrow_id: bigint;
+  gate: string;
+  capsule_id: bigint;
+  sponsor: string;
+  beneficiary: string;
+  amount: bigint;
+  funded_at: bigint;
+  claim_after: bigint;
+  activation_deadline: bigint;
+  status: "FUNDED" | "RELEASED" | "REFUNDED";
+  terminal_reason: string;
+  released_amount: bigint;
+  refunded_amount: bigint;
 }
 
 export interface TransactionRecord {

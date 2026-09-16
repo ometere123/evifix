@@ -8,6 +8,8 @@ EviFix is an invariant-bound semantic patching protocol that lets Intelligent Co
 
 EviFix uses Intelligent Consensus for a problem deterministic smart contracts cannot solve alone: determining the semantic behaviour change between two arbitrary program versions and adjudicating target-specific natural-language invariants.
 
+An optional GEN reward escrow makes that adjudication consequential without moving arithmetic into the model: the sponsor funds a capsule, and deterministic code releases the exact amount only after finalized target activation, or refunds it on a terminal non-verified outcome.
+
 The contract does not outsource authorization to an LLM. Deterministic code verifies exact source/evidence bindings, derives scope violations from schema-constrained semantic outputs, and requires independent validator agreement before a receipt can exist.
 
 ## Distinguishing mechanisms

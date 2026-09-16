@@ -15,11 +15,23 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt
-      - run: python -m compileall -q contracts tests scripts
-      - name: GenVM AST safety lint
+      - run: python -m py_compile contracts/evifix_gate.py contracts/evifix_target_v1.py contracts/evifix_escrow.py
+      - name: GenVM lint
         run: |
-          genvm-lint lint contracts/evifix_gate.py
-          genvm-lint lint contracts/evifix_target_v1.py
+          genvm-lint check contracts/evifix_gate.py --json
+          genvm-lint check contracts/evifix_target_v1.py --json
+          genvm-lint check contracts/evifix_escrow.py --json
+      - name: GenVM validation and schema
+        run: |
+          genvm-lint validate contracts/evifix_gate.py
+          genvm-lint validate contracts/evifix_target_v1.py
+          genvm-lint validate contracts/evifix_escrow.py
+          genvm-lint schema contracts/evifix_gate.py --output /tmp/evifix-gate.schema.json
+          genvm-lint schema contracts/evifix_target_v1.py --output /tmp/evifix-target.schema.json
+          genvm-lint schema contracts/evifix_escrow.py --output /tmp/evifix-escrow.schema.json
+          PYTHONIOENCODING=utf-8 genvm-lint typecheck contracts/evifix_gate.py
+          PYTHONIOENCODING=utf-8 genvm-lint typecheck contracts/evifix_target_v1.py
+          PYTHONIOENCODING=utf-8 genvm-lint typecheck contracts/evifix_escrow.py
       - run: pytest tests/direct -q
       - name: verify Studionet lock
         run: |
@@ -47,5 +59,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
       - run: npm run build
+
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/reviewer-check.sh

@@ -3,6 +3,7 @@ import { studionet } from "genlayer-js/chains";
 
 export const GATE_ADDRESS = import.meta.env.VITE_EVIFIX_GATE_ADDRESS as `0x${string}` | undefined;
 export const TARGET_ADDRESS = import.meta.env.VITE_EVIFIX_TARGET_ADDRESS as `0x${string}` | undefined;
+export const ESCROW_ADDRESS = import.meta.env.VITE_EVIFIX_ESCROW_ADDRESS as `0x${string}` | undefined;
 
 export const NETWORK = {
   name: "GenLayer Studionet",
@@ -82,6 +83,13 @@ export async function currentChainId(): Promise<number | null> {
 export function getWriteClient() {
   if (!writeClient) throw new Error("Wallet not connected");
   return writeClient;
+}
+
+export async function assertStudionetBeforeWrite() {
+  const chainId = await currentChainId();
+  if (chainId !== NETWORK.chainId) {
+    throw new Error(`Write blocked: switch wallet to ${NETWORK.name} (chain ${NETWORK.chainId}).`);
+  }
 }
 
 export async function restoreWalletConnection(): Promise<string | null> {

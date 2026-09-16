@@ -1515,6 +1515,7 @@ class EviFixGate(gl.Contract):
         return json.dumps({
             "capsule_id": int(c.capsule_id),
             "target": str(c.target),
+            "opener": str(c.opener),
             "baseline_generation": int(c.baseline_generation),
             "baseline_version": c.baseline_version,
             "baseline_code_hash": c.baseline_code_hash,
