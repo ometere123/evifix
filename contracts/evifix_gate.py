@@ -943,7 +943,7 @@ class EviFixGate(gl.Contract):
         declared_intent: str,
         declared_domains_json: str,
     ) -> u256:
-        target_address = Address(target)
+        target_address = _normalize_address(target)
         profile = self._require_profile_owner(target_address)
         if self.active_capsule_by_target.get(target_address, self._inactive()) != self._inactive():
             raise gl.vm.UserError("Target already has an active patch capsule")
@@ -1310,7 +1310,7 @@ class EviFixGate(gl.Contract):
         receipt = self.receipts[capsule_id]
         if capsule.status != STATUS_RECEIPT_ISSUED or receipt.status != RECEIPT_ISSUED:
             return False
-        if str(capsule.target).lower() != str(Address(target)).lower():
+        if str(capsule.target).lower() != str(_normalize_address(target)).lower():
             return False
         if receipt.target != capsule.target:
             return False
@@ -1465,32 +1465,32 @@ class EviFixGate(gl.Contract):
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_active_capsule(self, target: str) -> u256:
-        return self.active_capsule_by_target.get(Address(target), self._inactive())
+        return self.active_capsule_by_target.get(_normalize_address(target), self._inactive())
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_profile_hash(self, target: str) -> str:
-        address = Address(target)
+        address = _normalize_address(target)
         if address not in self.profiles:
             return ""
         return self.profiles[address].profile_hash
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_baseline_hash(self, target: str) -> str:
-        address = Address(target)
+        address = _normalize_address(target)
         if address not in self.profiles:
             return ""
         return self.profiles[address].baseline_code_hash
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_baseline_version(self, target: str) -> str:
-        address = Address(target)
+        address = _normalize_address(target)
         if address not in self.profiles:
             return ""
         return self.profiles[address].baseline_version
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_generation(self, target: str) -> u256:
-        address = Address(target)
+        address = _normalize_address(target)
         if address not in self.profiles:
             return u256(0)
         return self.profiles[address].generation
