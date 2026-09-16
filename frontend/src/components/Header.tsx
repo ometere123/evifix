@@ -38,6 +38,7 @@ export function Header({ inApp, onHome, onLaunch }: { inApp: boolean; onHome: ()
           )}
         </div>
       </div>
+      {wallet.error ? <div role="alert" className="mx-auto max-w-7xl border-t border-danger/20 px-4 py-2 text-xs text-danger sm:px-6">{wallet.error}</div> : null}
     </header>
   );
 }

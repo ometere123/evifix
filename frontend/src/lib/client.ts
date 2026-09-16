@@ -61,6 +61,24 @@ export function getConnectedAddress() {
   return connectedAddress;
 }
 
+export async function syncWalletAddress(): Promise<string | null> {
+  if (!window.ethereum) return null;
+  const accounts = await window.ethereum.request({ method: "eth_accounts" }) as string[];
+  const selected = accounts[0] as `0x${string}` | undefined;
+  if (!selected) {
+    disconnectWallet();
+    return null;
+  }
+  buildWriteClient(selected);
+  return selected;
+}
+
+export async function currentChainId(): Promise<number | null> {
+  if (!window.ethereum) return null;
+  const value = await window.ethereum.request({ method: "eth_chainId" }) as string;
+  return Number(value);
+}
+
 export function getWriteClient() {
   if (!writeClient) throw new Error("Wallet not connected");
   return writeClient;
