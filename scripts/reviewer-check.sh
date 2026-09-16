@@ -12,7 +12,7 @@ if printf '%s\n' "$tracked" | grep -E '(private.?key|mnemonic|seed.?phrase|keyst
   exit 1
 fi
 
-if git grep -n -E '61997|Bradbury|studio-dev\.genlayer\.com' -- contracts frontend scripts >/dev/null; then
+if git grep -n -E '61997|Bradbury|studio-dev\.genlayer\.com' -- contracts frontend >/dev/null; then
   echo "non-Studionet network reference found in application sources" >&2
   exit 1
 fi

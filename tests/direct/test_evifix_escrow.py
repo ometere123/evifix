@@ -1,4 +1,5 @@
 import json
+import sys
 
 
 def _address(value) -> str:
@@ -7,24 +8,48 @@ def _address(value) -> str:
     return str(value)
 
 
-def _deploy_stub(direct_deploy, target, opener, status="READY", expires_at=2_000_000_000):
-    return direct_deploy(
-        "contracts/fixtures/evifix_gate_escrow_stub.py",
-        _address(target),
-        _address(opener),
-        status,
-        expires_at,
-    )
+GATE_ADDRESS = "0x" + "11" * 20
+
+
+def _deploy_escrow(direct_deploy, target, opener, status="READY", expires_at=2_000_000_000):
+    """Deploy one contract per test and replace the cross-call with a deterministic stub.
+
+    GenVM Direct Mode permits one Contract subclass per process.  A deployed
+    mock gate plus the escrow therefore collides with the runner's global
+    contract registration.  Patching the escrow module's interface preserves
+    the production call boundary without adding a second contract class.
+    """
+    escrow = direct_deploy("contracts/evifix_escrow.py")
+    summary = {
+        "capsule_id": 1,
+        "target": _address(target),
+        "opener": _address(opener),
+        "status": status,
+        "expires_at": expires_at,
+    }
+
+    class GateCallStub:
+        def __init__(self, _address):
+            pass
+
+        def view(self):
+            return self
+
+        def get_capsule_summary(self, _capsule_id):
+            return json.dumps(summary, separators=(",", ":"))
+
+    module = sys.modules["_contract_evifix_escrow"]
+    module.EviFixGate = GateCallStub
+    return escrow, summary
 
 
 def test_funding_binds_capsule_opener_and_exact_value(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
-    stub = _deploy_stub(direct_deploy, direct_charlie, direct_bob)
-    escrow = direct_deploy("contracts/evifix_escrow.py")
+    escrow, _ = _deploy_escrow(direct_deploy, direct_charlie, direct_bob)
     direct_vm.sender = direct_alice
     direct_vm.value = 10**15
 
     escrow_id = escrow.fund_patch(
-        _address(stub.address),
+        GATE_ADDRESS,
         1,
         _address(direct_bob),
         2_000_000_300,
@@ -33,29 +58,27 @@ def test_funding_binds_capsule_opener_and_exact_value(direct_vm, direct_deploy, 
     assert stored.sponsor == direct_alice
     assert stored.beneficiary == direct_bob
     assert stored.amount == 10**15
-    assert escrow.get_escrow_for_capsule(_address(stub.address), 1) == escrow_id
+    assert escrow.get_escrow_for_capsule(GATE_ADDRESS, 1) == escrow_id
 
 
 def test_funding_rejects_wrong_beneficiary_and_duplicate_capsule(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
-    stub = _deploy_stub(direct_deploy, direct_charlie, direct_bob)
-    escrow = direct_deploy("contracts/evifix_escrow.py")
+    escrow, _ = _deploy_escrow(direct_deploy, direct_charlie, direct_bob)
     direct_vm.sender = direct_alice
     direct_vm.value = 10**15
     with direct_vm.expect_revert("beneficiary must be the capsule opener"):
-        escrow.fund_patch(_address(stub.address), 1, _address(direct_charlie), 2_000_000_300)
+        escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_charlie), 2_000_000_300)
 
-    escrow_id = escrow.fund_patch(_address(stub.address), 1, _address(direct_bob), 2_000_000_300)
+    escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
     assert escrow_id == 1
     with direct_vm.expect_revert("capsule already has escrow"):
-        escrow.fund_patch(_address(stub.address), 1, _address(direct_bob), 2_000_000_300)
+        escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
 
 def test_release_requires_verified_status_and_beneficiary(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
-    stub = _deploy_stub(direct_deploy, direct_charlie, direct_bob, status="READY")
-    escrow = direct_deploy("contracts/evifix_escrow.py")
+    escrow, _ = _deploy_escrow(direct_deploy, direct_charlie, direct_bob, status="READY")
     direct_vm.sender = direct_alice
     direct_vm.value = 10**15
-    escrow_id = escrow.fund_patch(_address(stub.address), 1, _address(direct_bob), 2_000_000_300)
+    escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
     direct_vm.sender = direct_bob
     with direct_vm.expect_revert("patch is not finalized as verified"):
@@ -67,11 +90,10 @@ def test_release_requires_verified_status_and_beneficiary(direct_vm, direct_depl
 
 
 def test_release_and_refund_are_terminal_and_accounted(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
-    stub = _deploy_stub(direct_deploy, direct_charlie, direct_bob, status="VERIFIED")
-    escrow = direct_deploy("contracts/evifix_escrow.py")
+    escrow, _ = _deploy_escrow(direct_deploy, direct_charlie, direct_bob, status="VERIFIED")
     direct_vm.sender = direct_alice
     direct_vm.value = 10**15
-    escrow_id = escrow.fund_patch(_address(stub.address), 1, _address(direct_bob), 2_000_000_300)
+    escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
 
     direct_vm.warp("2033-05-18T03:33:30Z")
     direct_vm.sender = direct_bob
@@ -89,11 +111,10 @@ def test_release_and_refund_are_terminal_and_accounted(direct_vm, direct_deploy,
 
 
 def test_terminal_failure_refunds_sponsor(direct_vm, direct_deploy, direct_alice, direct_bob, direct_charlie):
-    stub = _deploy_stub(direct_deploy, direct_charlie, direct_bob, status="REJECTED")
-    escrow = direct_deploy("contracts/evifix_escrow.py")
+    escrow, _ = _deploy_escrow(direct_deploy, direct_charlie, direct_bob, status="REJECTED")
     direct_vm.sender = direct_alice
     direct_vm.value = 10**15
-    escrow_id = escrow.fund_patch(_address(stub.address), 1, _address(direct_bob), 2_000_000_300)
+    escrow_id = escrow.fund_patch(GATE_ADDRESS, 1, _address(direct_bob), 2_000_000_300)
     escrow.refund_patch(escrow_id)
     stored = escrow.get_escrow(escrow_id)
     assert stored.status == "REFUNDED"
