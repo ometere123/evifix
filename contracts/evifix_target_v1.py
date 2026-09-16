@@ -19,7 +19,7 @@ class EviFixGate:
     class Write:
         def anchor_target(
             self,
-            owner: str,
+            owner: Address,
             invariant_profile_json: str,
             source_prefix: str,
             evidence_policy_json: str,
@@ -126,7 +126,7 @@ class EviFixTarget(gl.Contract):
         self.enrolled_with_evifix = True
 
         EviFixGate(self.evifix_gate).emit(on="finalized").anchor_target(
-            str(self.owner),
+            self.owner,
             invariant_profile_json,
             source_prefix,
             evidence_policy_json,

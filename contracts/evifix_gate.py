@@ -265,6 +265,12 @@ def _is_hex_hash(value: str) -> bool:
     return True
 
 
+def _normalize_address(value: object) -> Address:
+    if isinstance(value, Address):
+        return value
+    return Address(str(value))
+
+
 def _check_timestamp(data: dict[object, object], now: int, max_age: int) -> str:
     published_raw = data.get("published_at")
     expires_raw = data.get("expires_at")
@@ -855,7 +861,7 @@ class EviFixGate(gl.Contract):
     @gl.public.write
     def anchor_target(
         self,
-        owner: str,
+        owner: Address,
         invariant_profile_json: str,
         source_prefix: str,
         evidence_policy_json: str,
@@ -867,7 +873,7 @@ class EviFixGate(gl.Contract):
         activation_timeout_seconds: int,
     ) -> None:
         target = gl.message.sender_address
-        owner_address = Address(owner)
+        owner_address = _normalize_address(owner)
         if target in self.profiles:
             raise gl.vm.UserError("Target already has an EviFix invariant profile")
         if owner_address == Address("0x0000000000000000000000000000000000000000"):
