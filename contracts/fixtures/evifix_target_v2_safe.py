@@ -1,122 +1,72 @@
-# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-
-from genlayer import *
-import hashlib
-
-
-@gl.contract_interface
-class EviFixGate:
-    class View:
+# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xºw^~)Þu¸ÍˆÝÅÅ áÍ´ÕÄäÍ¡Ý™ÀÝ©ÅµÝÍ™¡ á©ÁèÀå Øˆô()™É½´ºw^~)ÞwövVæÆ–W"–×÷'B ¦–×÷'B†6†Æ–   ¤vÂæ6öçG&éÝyø§yßØÝÚ[\™˜XÙB˜Û\ÜÈ]šQš^Ø]N‚ˆÛ\ÜÈšY[§uçâç:
         def verify_patch_receipt(
+         ºw^~)Þt€€Í•±˜°(€€€€€€€€€€€…ÁÍÕ±•}¥èÔÈÔØ°(€€€€€ºw^~)ÞwòF&vWC¢7G"À¢&6VÆ–æUö†6‚éÝyø§yßÈÝ‹ˆØ[™Y]WÚ\ÚˆÝ‹ˆ§uçâç      receipt_hash: str,
+        ) -> bool: .ºw^~)Þt¸¸((€€€±…ÍÌ]É¥Ñ”è(€€€€€€€‘•˜…¹¡½É}Ñ…Éºw^~)Þw÷B€¢6VÆbÀ¢÷væW#¢FG&éÝyø§yßÜÜËˆ[˜\šX[Ü›Ùš[WÚœÛÛŽˆÝ‹§uçâç            source_prefix: str,
+            eºw^~)ÞuÙ¥‘•¹•}Á½±¥å}©Í½¸èÍÑÈ°(€€€€€€€€€€€‰…Í•±¥ºw^~)ÞwöU÷fW'6–öã¢7G"À¢&6VÆ–æU÷6÷W&6UöéÝyø§yßÜ›ˆÝ‹ˆ˜\Ù[[™WØÛÙWÚ\ÚˆÝ‹§uçâç
+            max_evidence_age_seconds: int,
+ ºw^~)Þt€€€€€€€€€€…ÁÍÕ±•}ÑÑ±}Í•½¹‘Ìè¥¹Ð°(€€€€€€€ºw^~)Þwò7F—fF–öå÷F–ÖV÷WE÷6V6öæG3¢–çBÀ¢éÝyø§yßÊHOˆ›Û™Nˆ‹‹‚‚ˆYˆ™XÛÜ™ØXÝ]˜][Û§uçâç(
             self,
-            capsule_id: u256,
-            target: str,
-            baseline_hash: str,
-            candidate_hash: str,
-            receipt_hash: str,
-        ) -> bool: ...
-
-    class Write:
-        def record_activation(
-            self,
-            capsule_id: u256,
-            receipt_hash: str,
-            candidate_hash: str,
-            generation: u256,
-        ) -> None: ...
-
-
-class EviFixTarget(gl.Contract):
-    # Exact v1 persistent prefix is preserved.
-    owner: Address
-    evifix_gate: Address
-    product_name: str
-    protected_value: str
+            capsule_id: uºw^~)ÞtÈÔØ°(€€€€€€€€€€€É••¥ÁÑ}¡…Í èÍÑÈ°(€€€€€€€€ºw^~)Þwò6æF–FFUö†6ƒ¢7G"À¢vVæW&F–éÝyø§yßÛŽˆLM‹ˆ
+HOˆ›Û™Nˆ‹‹‚‚‚˜Û\ÜÈ]šQ›§uçâçxTarget(gl.Contract):
+    # Persistent v1 layºw^~)Þu½ÕÐ¸½µÁ…Ñ¥‰±”Á…Ñ¡•ÌµÕÍÐÁÉ•Í•ÉÙ”Ñ¡•Í”ºw^~)Þwö–VÆG2–â÷&FW"à¢÷væW#¢FG&W70¢Wf–f–éÝyø§yß×ÙØ]NˆY™\ÜÂˆ›ÙXÝÛ˜[YNˆÝ‚ˆ›Û§uçâçected_value: str
     baseline_hash: str
-    last_receipt_hash: str
-    last_capsule_id: u256
-    baseline_generation: u256
-    enrolled_with_evifix: bool
+    lºw^~)Þu…ÍÑ}É••¥ÁÑ}¡…Í èÍÑÈ(€€€±…ÍÑ}…ÁÍÕ±•}¥èÔºw^~)ÞwóS`¢&6VÆ–æUövVæW&F–öã¢S#S`¢Vç&öÆÆVéÝyø§yß×ÝÚ]Ù]šYš^ˆ›ÛÛ‚ˆYˆ×Ú[š]×ÊÙ[‹[§uçâçifix_gate: Address, product_name: str, initiaºw^~)Þu±}Ù…±Õ”èÍÑÈ¤è(€€€€€€€Í•±˜¹½Ý¹•È€ô°¹µ•ÍÍ…ºw^~)ÞwöRç6VæFW%öFG&W70¢2vVäÆ–W"w2W‡FW&æéÝyø§yßÛÛÛœÝXÝÜˆ›Ý[™\žHX^H[]™\ˆ[ˆY™\Û§uçâç as
+        # its serialized hexadecimal striºw^~)Þu¹œ™½É´¸9½Éµ…±¥é”‰•™½É”Á•ÉÍ¥ÍÑ¥¹œ(€€€€€€€ºw^~)Þwò26òF†R7F÷&vRf–VÆB&VÖ–ç2âFG&W72–âéÝyø§yßÙ]™\žH^XÝ][Ûˆ[ÙK‚ˆ]šYš^ÙØ]WØY§uçâçress = Address(str(evifix_gate))
+        selfºw^~)Þt¹•Ù¥™¥á}…Ñ”€ô•Ù¥™¥á}…Ñ•}…‘‘É•ÍÌ(€€€€€€€Íºw^~)ÞwöÆbç&öGV7EöæÖRÒ&öGV7EöæÖP¢6VÆbæéÝyø§yßÜ›ÝXÝYÝ˜[YHH[š]X[Ý˜[YBˆÙ[‹›§uçâçaseline_hash = ""
+        self.last_receipt_hºw^~)Þu…Í €ô€ˆˆ(€€€€€€€Í•±˜¹±…ÍÑ}…ÁÍÕ±•}¥€ôÔÈÔØºw^~)Þwó¢6VÆbæ&6VÆ–æUövVæW&F–öâÒS#SbƒéÝyø§yßÂˆÙ[‹™[œ›ÛYÝÚ]Ù]šYš^H˜[ÙB‚‹§uçâç       # EviFix is the sole GenVM code upgradºw^~)Þu•È¸Q¡”½Ý¹•È¥Ì‘•±¥‰•É…Ñ•±ä¹½Ð…¸ÕÁÉ…‘•ºw^~)Þwòà¢&ö÷BÒvÂç7F÷&vRå&ö÷BævWB‚¢éÝyø§yßÈ›ÛÝ\Ü˜Y\œË™Ù]
+
+K˜\[™
+]šYš^ÙØ]WØY§uçâçress)
 
     def _only_owner(self) -> None:
-        if gl.message.sender_address != self.owner:
-            raise gl.vm.UserError("Only owner")
+   ºw^~)Þt€€€€¥˜°¹µ•ÍÍ…”¹Í•¹‘•É}…‘‘É•ÍÌ€„ôÍ•±˜¹½Ýºw^~)ÞwöW# ¢&—6RvÂçfÒåW6W$W'&÷"‚$öæÇ’éÝyø§yßÝÛ™\ˆŠB‚ˆYˆÚ\×Ú^Ú\Ú
+Ù[‹˜[YNˆÝ§uçâç) -> bool:
+        if len(value) != 64:
+     ºw^~)Þt€€€€€€É•ÑÕÉ¸…±Í”(€€€€€€€™½È¡…È¥¸Ù…±Õºw^~)Þwó ¢–b6†"æ÷B–â##3CScsƒ–&6FéÝyø§yßÙˆŽ‚ˆ™]\›ˆ˜[ÙBˆ™]§uçâçrn True
 
     @gl.public.write
-    def set_protected_value(self, value: str) -> None:
-        self._only_owner()
-        self.protected_value = value.strip()
+    def set_proºw^~)ÞuÑ•Ñ•‘}Ù…±Õ”¡Í•±˜°Ù…±Õ”èÍÑÈ¤€´ø9½¹”è(€€€€ºw^~)Þwò6VÆbåööæÇ•ö÷væW"‚¢6VÆbç&÷FV7FVFéÝyø§yßÝ˜[YHH˜[YB‚ˆÛœX›XËšY]ÈÈ\šYÚ§uçâç: ignore[reportUnknownMemberType]
+    def getºw^~)Þu}ÁÉ½Ñ•Ñ•‘}Ù…±Õ”¡Í•±˜¤€´øÍÑÈè(€€€€€€€É•ÑÕÉºw^~)Þwò6VÆbç&÷FV7FVE÷fÇVP ¢vÂçV&Æ–2çf–WréÝyø§yßÈ\šYÚˆYÛ›Ü™VÜ™\Ü[šÛ›ÝÛ“Y[X™\•\WBˆ§uçâç def get_product_name(self) -> str:
+        rºw^~)Þu•ÑÕÉ¸Í•±˜¹ÁÉ½‘ÕÑ}¹…µ”((€€€°¹ÁÕ‰±¥Œ¹Ù¥•Üºw^~)Þwò2—&–v‡C¢–væ÷&U·&W÷'EVæ¶æ÷väÖVÖ&W%G—UÐ¢éÝyø§yßÈYˆÙ]ÛÝÛ™\ŠÙ[ŠHOˆY™\ÜÎ‚ˆ›§uçâçturn self.owner
 
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def get_protected_value(self) -> str:
-        return self.protected_value
-
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def get_product_name(self) -> str:
-        return self.product_name
-
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def get_owner(self) -> Address:
-        return self.owner
-
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def get_evifix_gate(self) -> Address:
-        return self.evifix_gate
-
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def get_release_label(self) -> str:
-        return "EviFix safe fixture v2"
-
-    @gl.public.write
-    def apply_evifix_patch(
+    @gl.public.view  # pyrigºw^~)Þu¡Ðè¥¹½É•mÉ•Á½ÉÑU¹­¹½Ý¹5•µ‰•ÉQåÁ•t(€€€‘•˜ºw^~)ÞwöWEöWf–f—…övFR‡6VÆb’ÓâFG&W73 ¢&WFéÝyø§yßÜ›ˆÙ[‹™]šYš^ÙØ]B‚ˆÛœX›XËÜš]Bˆ§uçâç def enrol_with_evifix(
         self,
-        capsule_id: u256,
-        receipt_hash: str,
-        baseline_hash: str,
-        candidate_hash: str,
-        candidate_code: bytes,
+       ºw^~)Þt¥¹Ù…É¥…¹Ñ}ÁÉ½™¥±•}©Í½¸èÍÑÈ°(€€€€€€€Í½ÕÉ•ºw^~)Þw÷&Vf—ƒ¢7G"À¢Wf–FVæ6U÷öÆ–7•ö§6öã¢6éÝyø§yßÜ‹ˆ˜\Ù[[™WÝ™\œÚ[ÛŽˆÝ‹ˆ˜[§uçâçeline_source_url: str,
+        baseline_code_ºw^~)Þu¡…Í èÍÑÈ°(€€€€€€€µ…á}•Ù¥‘•¹•}…•}Í•½¹‘Ìèºw^~)Þwö–çBÀ¢67VÆU÷GFÅ÷6V6öæG3¢–çBÀ¢éÝyø§yßÈXÝ]˜][Û—Ý[Y[Ý]ÜÙXÛÛ™Îˆ[ˆ
+HOˆ§uçâçone:
+        self._only_owner()
+        if seºw^~)Þu±˜¹•¹É½±±•‘}Ý¥Ñ¡}•Ù¥™¥àè(€€€€€€€€€€€É…¥Í”ºw^~)ÞwòçfÒåW6W$W'&÷"‚$Ç&VG’Vç&öÆÆVBv—F‚Wf”f—‚"éÝyø§yßÂˆ›Ü›X[^™YÚ\ÚH˜\Ù[[™WØÛÙWÚ\Û§uçâç.lower()
+        if not self._is_hex_hash(norºw^~)Þuµ…±¥é•‘}¡…Í ¤è(€€€€€€€€€€€É…¥Í”°¹Ù´¹UÍ•Éºw^~)Þw÷&÷"‚&&6VÆ–æUö6öFUö†6‚×W7B&RÆ÷vW&66RéÝyø§yßÒKLMˆYÙ\ÝŠB‚ˆÈ[˜ÚÜˆH\™Ù]§uçâçlocal baseline before finality. If this transºw^~)Þu…Ñ¥½¸‘½•Ì¹½Ð(€€€€€€€€Œ™¥¹…±¥é”°¹•¥Ñ¡•Èºw^~)Þwö†—27FFRæ÷"F†RvFR×6–FR&öf–ÆR&V6öÖW2éÝyø§yßÝ]Üš]]]™K‚ˆÙ[‹˜˜\Ù[[™WÚ\ÚH›§uçâçrmalized_hash
+        self.enrolled_with_evifºw^~)Þu¥à€ôQÉÕ”((€€€€€€€€ŒI•Í½±Ù”Ñ¡”Ñ…É•Ð½¹Ñºw^~)Þwö7BF‡&÷Vv‚vVådÒw26æöæ–6Â7&÷72Ö6öçG&7BéÝyø§yßÈÈ[™H™Y›Ü™H[Z][™ÈHš[˜[^›§uçâçd anchor message. This keeps the
+        # meºw^~)ÞuÍÍ…”Í•¹‘•È…ÌÑ¡¥ÌQ…É•Ð%½¸MÑÕ‘¥½¹•Ð¸ºw^~)ÞwòvFRÒvÂævWEö6öçG&7EöB‡6VÆbæWf–f–éÝyø§yß×ÙØ]JBˆØ]K™[Z]
+ÛH™š[˜[^™YŠK˜[˜Û§uçâçor_target(
+            self.owner,
+          ºw^~)Þt€¥¹Ù…É¥…¹Ñ}ÁÉ½™¥±•}©Í½¸°(€€€€€€€€€€€Í½ÕÉ•ºw^~)Þw÷&Vf—‚À¢Wf–FVæ6U÷öÆ–7•ö§6öâÀ¢éÝyø§yßÈ˜\Ù[[™WÝ™\œÚ[Û‹ˆ˜\Ù[§uçâçne_source_url,
+            normalized_hash,
+ ºw^~)Þt€€€€€€€€€€µ…á}•Ù¥‘•¹•}…•}Í•½¹‘Ì°(€€€€€€€ºw^~)Þwò67VÆU÷GFÅ÷6V6öæG2À¢7F—fFéÝyø§yßÛÛ—Ý[Y[Ý]ÜÙXÛÛ™Ëˆ
+B‚ˆÛœX›[§uçâç.write
+    def apply_evifix_patch(
+        seºw^~)Þu±˜°(€€€€€€€…ÁÍÕ±•}¥èÔÈÔØ°(€€€€€€€É••¥Áºw^~)Þwõö†6ƒ¢7G"À¢&6VÆ–æUö†6ƒ¢7G"À¢éÝyø§yßÈØ[™Y]WÚ\ÚˆÝ‹ˆØ[™Y]WØÛÛ§uçâçe: bytes,
     ) -> None:
-        if gl.message.sender_address != self.evifix_gate:
-            raise gl.vm.UserError("Only EviFix may deliver a patch receipt")
-        normalized_baseline = baseline_hash.lower()
-        normalized_candidate = candidate_hash.lower()
-        if self.baseline_hash != normalized_baseline:
-            raise gl.vm.UserError("Local verified baseline does not match the receipt baseline")
-        actual_hash = hashlib.sha256(candidate_code).hexdigest()
-        if actual_hash != normalized_candidate:
-            raise gl.vm.UserError("Delivered candidate bytes do not match the receipt candidate hash")
-        gate = EviFixGate(self.evifix_gate)
-        if not gate.view().verify_patch_receipt(
-            capsule_id,
-            str(gl.message.contract_address),
+        if gl.messagºw^~)Þu”¹Í•¹‘•É}…‘‘É•ÍÌ€„ôÍ•±˜¹•Ù¥™¥á}…Ñ”è(€€€€€€ºw^~)Þwò&—6RvÂçfÒåW6W$W'&÷"‚$öæÇ’Wf”f—‚Ö’éÝyø§yßÙ[]™\ˆH]Ú™XÙZ\ŠBˆYˆ›ÝÙ[‹§uçâçenrolled_with_evifix:
+            raise gl.vmºw^~)Þt¹UÍ•ÉÉÉ½È ‰Q…É•Ð¥Ì¹½Ð•¹É½±±•Ý¥Ñ Ù¥ºw^~)Þw÷‚" ¢æ÷&ÖÆ—¦VEö&6VÆ–æRÒ&6VÆ–æUöéÝyø§yßØ\Ú›ÝÙ\Š
+Bˆ›Ü›X[^™YØØ[™Y]HHÛ§uçâçndidate_hash.lower()
+        if self.baselineºw^~)Þu}¡…Í €„ô¹½Éµ…±¥é•‘}‰…Í•±¥¹”è(€€€€€€€€€€€É…ºw^~)Þw÷6RvÂçfÒåW6W$W'&÷"‚$Æö6ÂfW&–f–VB&6VÆ–æRéÝyø§yßÛÙ\È›ÝX]ÚH™XÙZ\˜\Ù[[™HŠBˆ§uçâçactual_hash = hashlib.sha256(candidate_code).ºw^~)Þu¡•á‘¥•ÍÐ ¤(€€€€€€€¥˜…ÑÕ…±}¡…Í €„ô¹½Éµ…±ºw^~)Þw÷¦VEö6æF–FFS ¢&—6RvÂçfÒåW6W$VéÝyø§yßÜ›ÜŠ‘[]™\™YØ[™Y]Hž]\ÈÈ›ÝX]Ú§uçâçhe receipt candidate hash")
+
+        gate = Eºw^~)ÞuÙ¥¥á…Ñ”¡Í•±˜¹•Ù¥™¥á}…Ñ”¤(€€€€€€€¥˜¹½Ðºw^~)Þw÷FRçf–Wr‚’çfW&–g•÷F6…÷&V6V—B€¢éÝyø§yßØ\Ý[WÚYˆÝŠÛ›Y\ÜØYÙK˜ÛÛ˜[§uçâçt_address),
             normalized_baseline,
-            normalized_candidate,
-            receipt_hash,
-        ):
-            raise gl.vm.UserError("Patch receipt is absent, stale, consumed, or mismatched")
-        next_generation = u256(int(self.baseline_generation) + 1)
-        self.baseline_hash = actual_hash
-        self.last_receipt_hash = receipt_hash
-        self.last_capsule_id = capsule_id
-        self.baseline_generation = next_generation
-        root = gl.storage.Root.get()
-        code = root.code.get()
-        code.truncate()
+ºw^~)Þt€€€€€€€€€€€¹½Éµ…±¥é•‘}…¹‘¥‘…Ñ”°(€€€€€€€€€€ºw^~)Þwò&V6V—Eö†6‚À¢“ ¢&—6RéÝyø§yßÛ›K•\Ù\‘\œ›ÜŠ”]Ú™XÙZ\\ÈXœÙ[Ý[§uçâçe, consumed, or mismatched")
+
+        next_geºw^~)Þu¹•É…Ñ¥½¸€ôÔÈÔØ¡¥¹Ð¡Í•±˜¹‰…Í•±¥¹•}•¹•É…Ñ¥½¸ºw^~)Þwò² ¢2W'6—7BF†R7F—fF–öâGFVéÝyø§yßÝ][Ûˆ™Y›Ü™HÛÙH™\XÙ[Y[ˆHÛÛ\]X›K§uçâçpatch
+        # preserves these fields and thºw^~)Þu•É•™½É”…ÉÉ¥•ÌÑ¡”Ù•É¥™¥•‰…Í•±¥¹”™½ÉÝ…Éºw^~)Þwòà¢6VÆbæ&6VÆ–æUö†6‚Ò7GVÅö†6€¢éÝyø§yßÈÙ[‹›\ÝÜ™XÙZ\Ú\ÚH™XÙZ\Ú\Ú‹§uçâç       self.last_capsule_id = capsule_id
+    ºw^~)Þt€€€Í•±˜¹‰…Í•±¥¹•}•¹•É…Ñ¥½¸€ô¹•áÑ}•¹•É…Ñ¥ºw^~)Þwöà ¢&ö÷BÒvÂç7F÷&vRå&ö÷BævWB‚¢éÝyø§yßÈÛÙHH›ÛÝ˜ÛÙK™Ù]
+
+BˆÛÙK[˜Û§uçâçte()
         code.extend(candidate_code)
-        gate.emit(on="finalized").record_activation(capsule_id, receipt_hash, actual_hash, next_generation)
 
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def evifix_baseline_hash(self) -> str:
-        return self.baseline_hash
+   ºw^~)Þt€€€€…Ñ”¹•µ¥Ð¡½¸ô‰™¥¹…±¥é•ˆ¤¹É•½É‘}…Ñ¥Ù…ºw^~)Þwö–öâ€¢67VÆUö–BÀ¢&V6éÝyø§yßÚ\Ú\ÚˆXÝX[Ú\Úˆ§uçâç  next_generation,
+        )
 
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def evifix_last_receipt_hash(self) -> str:
-        return self.last_receipt_hash
-
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def evifix_last_capsule_id(self) -> u256:
-        return self.last_capsule_id
-
-    @gl.public.view  # pyright: ignore[reportUnknownMemberType]
-    def evifix_generation(self) -> u256:
-        return self.baseline_generation
+    @gl.public.ºw^~)ÞuÙ¥•Ü€€ŒÁåÉ¥¡Ðè¥¹½É•mÉ•Á½ÉÑU¹­¹½Ý¹5•µ‰•ÉQºw^~)Þw÷UÐ¢FVbWf–f—…ö&6VÆ–æUö†6‚‡6VÆb’Óâ7FéÝyø§yßÎ‚ˆ™]\›ˆÙ[‹˜˜\Ù[[™WÚ\Ú‚ˆÛ§uçâçpublic.view  # pyright: ignore[reportUnknownMºw^~)Þu•µ‰•ÉQåÁ•t(€€€‘•˜•Ù¥™¥á}±…ÍÑ}É••¥ÁÑ}¡…Í ¡ºw^~)ÞwöVÆb’Óâ7G# ¢&WGW&â6VÆbæÆ7E÷&V6V—éÝyø§yß×Ú\Ú‚ˆÛœX›XËšY]ÈÈ\šYÚˆYÛ›Ü›§uçâç[reportUnknownMemberType]
+    def evifix_lastºw^~)Þu}…ÁÍÕ±•}¥¡Í•±˜¤€´øÔÈÔØè(€€€€€€€É•ÑÕÉ¸Í•ºw^~)ÞwöbæÆ7Eö67VÆUö–@ ¢vÂçV&Æ–2çf–Wr2–éÝyø§yßÚYÚˆYÛ›Ü™VÜ™\Ü[šÛ›ÝÛ“Y[X™\•\WBˆ[§uçâç evifix_generation(self) -> u256:
+        retºw^~)ÞuÕÉ¸Í•±˜¹‰…Í•±¥¹•}•¹•É…Ñ¥½¸(5£
