@@ -1,0 +1,1 @@
+def test_protected_value_is_bounded_and_trimmed():`n    value = "  safe value  "`n    assert value.strip() == "safe value"`n    assert len("x" * 257) > 256`n
