@@ -1,0 +1,1 @@
+ReferralRail v2 capacity proof\n\nChallenge: ReferralRailV2:9:1:0xb29Ead15B1E8A2420faE84de974088f67a15ccC2:abebdef1d1a6d1c22e03959136edad64\n\nThis public evidence records the required bounded input change and preserved gate-only authority.
