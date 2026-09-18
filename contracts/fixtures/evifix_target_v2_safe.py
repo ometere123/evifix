@@ -45,7 +45,10 @@ class EviFixTarget(gl.Contract):
     @gl.public.write
     def set_protected_value(self, value: str) -> None:
         self._only_owner()
-        self.protected_value = value.strip()
+        normalized = value.strip()
+        if len(normalized) > 256:
+            raise gl.vm.UserError("Protected value exceeds the bounded limit")
+        self.protected_value = normalized
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
     def get_protected_value(self) -> str:
