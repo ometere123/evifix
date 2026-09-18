@@ -1,0 +1,1 @@
+# ReferralRail live safety fix`n`nThis fresh PR implements the bounded protected-value input fix and regression coverage.`n`nThe implementation retains gate-only upgrade authority and candidate-byte hash verification.`n`nReferral challenge: ReferralRailV2:1:1:0xb29Ead15B1E8A2420faE84de974088f67a15ccC2:589ed2e524b470ab703dd827aae9217c`n
