@@ -3,6 +3,8 @@
 from genlayer import *
 import hashlib
 
+MAX_PROTECTED_VALUE_BYTES = 256
+
 
 @gl.contract_interface
 class EviFixGate:
@@ -45,6 +47,8 @@ class EviFixTarget(gl.Contract):
     @gl.public.write
     def set_protected_value(self, value: str) -> None:
         self._only_owner()
+        if len(value.encode("utf-8")) > MAX_PROTECTED_VALUE_BYTES:
+            raise gl.vm.UserError("protected value is too large")
         self.protected_value = value.strip()
 
     @gl.public.view  # pyright: ignore[reportUnknownMemberType]
