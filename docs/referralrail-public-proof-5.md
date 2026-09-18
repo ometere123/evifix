@@ -1,0 +1,1 @@
+# ReferralRail public evidence`n`nThis public evidence records the bounded protected-value fix, a 256-character input limit, normalization before storage, and preservation of gate-only upgrade authority and candidate-byte hash verification.`n`nAcceptance challenge: ReferralRailV2:5:1:0xb29Ead15B1E8A2420faE84de974088f67a15ccC2:a836b2b3644548b9687b1022197147d4`n

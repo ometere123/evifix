@@ -1,0 +1,1 @@
+# ReferralRail public web evidence 6`n`nThe implementation bounds protected-value input to 256 characters, normalizes input before storage, and preserves gate-only upgrade authority and candidate-byte hash verification.`n`nAcceptance challenge: ReferralRailV2:6:1:0xb29Ead15B1E8A2420faE84de974088f67a15ccC2:f7a729f65da2c5a35d9dc6b36e78e417`n
