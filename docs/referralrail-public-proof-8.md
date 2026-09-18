@@ -1,0 +1,1 @@
+# ReferralRail public web retry evidence`n`nThe bounded protected-value change limits input to 256 characters, normalizes before storage, and preserves gate-only upgrade authority.`n`nAcceptance challenge: ReferralRailV2:8:1:0xb29Ead15B1E8A2420faE84de974088f67a15ccC2:5c7e1a45b1ff92e7857b634396fc0f44`n
